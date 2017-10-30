@@ -17,7 +17,7 @@ contract FutureBlock{
         address owner;   // Who needs the flexibility?
         int offerAmount;   // This amount could be negative and positive. Negative implies that the oferter is using too much, and must remove his consumption.
         // Is it necessary with a maximum power? The oferter does not recieve the actual power.
-        uint[1] interval;   // Over how long time is the energy needed?
+        uint[2] interval;   // Over how long time is the energy needed?
         uint clearingTime; // The oferter set this. It is risky with a longer clearing time. Not necessary.
         uint offerNr;
 
@@ -43,9 +43,9 @@ contract FutureBlock{
     uint public numOffers;
     uint public numBids;
 
-    event NewOffer()
-    event UpdateBid()
-    event CorrectionOffer()
+    event NewOffer();
+    event UpdateBid();
+    event CorrectionOffer();
 
     /////// FUNCTIONS ////////
 
@@ -141,11 +141,11 @@ contract FutureBlock{
         return(true);
     }
 
-    function correctionOffer(uint _offerNr, int _amount, uint _interval){
+    function correctionOffer(uint _offerNr, int _amount, uint _startInterval, uint _endInterval){
         // This is called by the house. The house do not need the requested energy! He need less or more
 
         if ((offers[_offerNr].offerAmount < 0 && _amount < 0) || (offers[_offerNr].offerAmount > 0 && _amount > 0) ){
-            newOffer(_amount, _interval);
+            newOffer(_amount, _startInterval, _endInterval);
         }
 
         // Now, the batteries must be warned that the amount have changed

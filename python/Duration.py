@@ -1,6 +1,6 @@
-#from web3 import Web3, HTTPProvider
+from web3 import Web3, HTTPProvider
 import json
-#import FlexCoin
+import FlexCoin
 import numpy as np
 
 ############### ASSUMPTIONS ###############
@@ -11,57 +11,68 @@ import numpy as np
 # - Each node is either a demand or supply node. A node cannot be both
 # - That supp and demand is the same size => perfectly adequat.
 
-#web3 = Web3(HTTPProvider('http://localhost:8545'))
-#jsonFile = open('/home/fred/Documents/FlexCoin_dir/build/contracts.json', 'r')
-#values = json.load(jsonFile)
-#jsonFile.close()
+web3 = Web3(HTTPProvider('http://localhost:8545'))
+jsonFile = open('/home/fred/Documents/energyEth/build/contracts.json', 'r')
+values = json.load(jsonFile)
+jsonFile.close()
 
-#abi = values['Duration']['abi']
-#address = input("What is the contract address? - FutureBlock: ")
-#Duration = web3.eth.contract(address, abi = abi)
+abi = values['Duration']['abi']
+address = input("What is the contract address? - Duration: ")
+Duration = web3.eth.contract(address, abi = abi)
 
 steps = 3
 numNodes = 4
 
-#tests
-
 ## demand is a [][] array from the blockchain
-demandPrice = [[999 for t in range(0, steps)] for node in range(0, numNodes)]
-demandHours = [0 for node in range(0,numNodes)]
+#demandPrice = [[999 for t in range(0, steps)] for node in range(0, numNodes)]
+#demandHours = [0 for node in range(0,numNodes)]
 
-supply = [[0 for t in range(0, steps)] for node in range(0, numNodes)]
-# Supply is cuanto necesario en cada paso.
+#supplyHours = [[0 for t in range(0, steps)] for node in range(0, numNodes)]
+# supplyHours is cuanto necesario en cada paso.
 
-demandPrice[0] = [32, 31, 40] #Duration.call().getDemandPrice(node)
-demandPrice[1] = [21, 32, 22]
-demandHours[0] = 2 #Duration.call().getDemandHours(node)
-demandHours[1] = 1
-supply[2] = [1, 0, 1] #Duration.call().getSupply(node)
-supply[3] = [1, 0, 0]
+#demandPrice[0] = [32, 31, 40] #Duration.call().getDemandPrice(node)
+#demandPrice[1] = [21, 32, 22]
+#demandHours[0] = 2 #Duration.call().getDemandHours(node)
+#demandHours[1] = 1
+#supplyHours[2] = [1, 0, 1] #Duration.call().getsupplyHours(node)
+#supplyHours[3] = [1, 0, 0]
 
-# getter for the demand y supply...!
+owner = ["0" for i in range(0, numNodes)]
+demandHours = [0 for i in range(0, numNodes)]
+demandPrices = [[0 for x in range(0, steps)] for y in range(0, numNodes)]
+supplyHours = [[0 for x in range(0, steps)] for y in range(0, numNodes)]
+# getter for the demand y supplyHours...!
 for i in range(0,numNodes):
-    owner[i], DemandHours[i], demandPrice[i], supply[i] = Duration.getNode(i)
-demandPrice = (np.array(demandPrice)).transpose()
-supply = (np.array(supply)).transpose()
+    if (i == 0):
+        Duration.transact({'from': web3.eth.accounts[i]}).setNode(2, [32, 21, 43], [0, 0, 0])
+    elif(i == 1):
+        Duration.transact({'from': web3.eth.accounts[i]}).setNode(1, [15, 19, 60], [0, 0, 0])
+    elif(i == 2):
+        Duration.transact({'from': web3.eth.accounts[i]}).setNode(0, [999, 999, 999], [1, 0, 1])
+    elif(i == 3):
+        Duration.transact({'from': web3.eth.accounts[i]}).setNode(0, [999, 999, 999], [1, 0, 0])
+    owner[i], demandHours[i], demandPrices[i], supplyHours[i] = Duration.call().getNode(i)
+demandPrices = (np.array(demandPrices)).transpose()
+supplyHours = (np.array(supplyHours)).transpose()
 
-def matching(supply, demand):
+def matching(supplyHours, demandPrices):
     sortedList = [[] for t in range(0, steps)]
+    addressFrom = []
+    addressTo = []
     for t in range(0,steps):
         ## bueno. sort, y create a list of index equal to the list.
-        for i in range(0, np.sum(supply[t])):
-            sortedList[t].append(demandPrice[t].tolist().index(min(demandPrice[t])))
-            demandPrice[t][sortedList[t][i]] = 999 # because a node not can give more in one step
-            addressFrom = sortedList[t][i]
-            addressTo = supply[t].tolist().index(1)
-            supply[t][addressTo] = 0
+        for i in range(0, np.sum(supplyHours[t])):
+            sortedList[t].append(demandPrices[t].tolist().index(min(demandPrices[t])))
+            demandPrices[t][sortedList[t][i]] = 999 # because a node not can give more in one step
+            addressFrom.append(sortedList[t][i])
+            addressTo.append(supplyHours[t].tolist().index(1))
+            supplyHours[t][addressTo] = 0
             demandHours[sortedList[t][i]] = demandHours[sortedList[t][i]] - 1
             if (demandHours[sortedList[t][i]] == 0): # The demand node is empty, and must be set to 999
                 for t2 in range(i, steps):
-                    demandPrice[t2][sortedList[t][i]] = 999
-            print(addressFrom)
-            print(addressTo)
-            print(demandHours)
+                    demandPrices[t2][sortedList[t][i]] = 999
+        print(addressFrom)
+        print(addressTo)
+        print(sortedList[t])
         Duration.transact().checkAndTransfer(sortedList[t], addressFrom, addressTo, t, FlexCoin.address)
-
     return sortedList
