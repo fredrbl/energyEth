@@ -1,0 +1,86 @@
+
+
+
+har en tidsperiode hver dag hvor demand og supply samles.
+Mellom 12-12 kan alle sende inn sine bud for de neste 24 timene
+
+
+Bueno. tenemos 10 nudos. 5 tiene producción. Tenemos una perfil de consumo y prod.
+como podemos cambiar los cajas? consumodores pegan por el energia, pero este precio
+deberia ser menos que normal. Entonces, los producciones pega mas que normal...
+bueno..
+En general, puede ser un bueno idea con la repaga. Si uno parte no usiendo su energia, o (mas probilidad)
+una eolica o solar que no produce el previsto.
+
+Pues.. -> matche. muy facil. un caja contra una caja. Que pasa si hay mas p?
+
+demand ma sette en pris pa a flytte sin cunsomo.
+un microgrid que tiene que ser autoapoyado con energia. Primero, cada dia los producciones
+esta planeado pensando en el consumo. produccion tiene sus precio marginales (bajo).
+
+el sueno es que crear un mercado donde es posible a participar en la cotidiana mercada. Aqui
+es posible a compre energia por todo la dia.
+
+en utility function som setter prisen.
+Si un demando no necesito
+
+el precio es cada paso de tiempo (puede ser mas o menos un hora).
+Primero, ve a la supply. Si este no coinciar con un consumo, tiene que ver en la demando que
+Para realizar este, cada caja de consumo debe tener un precio por cambiar su hora.
+por ejemplo, un auto puede tiene precios mas bajo despues trabajo.
+Ya. cada nudo tiene un lista con precios diferente. Los precios refleja el complacencia de su
+consumodor.
+
+Pero! es necesario en verdad? nopo... Un complejo algoritma es caaaro. Mejor con un algoritma
+mas barato, ahi no un solucion optima.
+
+Entonces; puedo cambiar la algoritma? oye. ahora. imagine un mercado total. Tu quieres comprar
+todo tu energia traves bc.
+
+- Imagina un lugar lejos de todo/isla. Quieremos a crear un mercado cuando
+
+Porque no emprender todos algoritmas en una lugar, y no en una bc? bahhh.
+informacion es bueeena. yah comieze de nuevo. local market. Hmm. Que con esto:
+Puede comprar de wholesale. Y, puede hegde baterias traves FutureBlock.
+Puede comprar flex en cual tiempo como posible, y
+La problema ocurre si queremos hacer todo en bc. No!
+
+sugerencia:
+- Paso 1: Crear la version de Matias, bien y barato en la bc
+    - Crear un matching estupido afuera la blockchain, con precios estupido.
+- Paso 2: Crear la version de Daniel
+- Paso 3: En ambos casos; crear una funciona que puede retirar plata a la persona si no usó todo.
+- Paso 4: Combinar la RealTime y Daniel para obtener un combinacion. RealTime es mejor..? sipo.
+- Con la versiona de Daniel; Crea un modela que tratar la flujos tambien?
+    - Entonces-> solamente mas computacion, y no mas cosas en la blockchain. Para mi, no interesante.
+    - Pero! puede calcularlo en un candena mas pequeno!
+
+PLAN: Crea versiona de Matias, y combinelo con realtime.
+Entonces, empieze a simular. Crear una scenario con autos que functiona como baterias y flexibilidad.
+Una dia, con primero oferta de la dia, y durante al dia usa el deviation ofertas.
+
+Quiza escribe este bajo, con detalles y pasos. Para mis profes aqui y Hossein. chucha en ingles.
+
+
+Contribuciones:
+- Pone un precio en seguridad puede ser un bien pregunta/ contribucion?
+-
+
+Empeze en la lugar que no tiene un demanda.
+
+
+ Si un caja de demando es
+igual de un caja de supply,
+
+Ya. interesante cuando todo el mundo puede comprar un grande caja, para asegurar su energia.
+entonces es interesante a mezclar los
+
+
+el dije que el precio no esta flexible.
+
+
+
+esta es un mercado local.
+
+
+La oss si at vi har to nodes som har

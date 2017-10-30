@@ -1,0 +1,6 @@
+{
+  "tests/test_FlexCoin.py::test_custom_greeting": true,
+  "tests/test_FlexCoin.py::test_match": true,
+  "tests/test_greeter.py::test_custom_greeting": true,
+  "tests/test_greeter.py::test_greeter": true
+}
