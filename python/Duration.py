@@ -23,6 +23,8 @@ import numpy as np
 steps = 3
 numNodes = 4
 
+#tests
+
 ## demand is a [][] array from the blockchain
 demandPrice = [[999 for t in range(0, steps)] for node in range(0, numNodes)]
 demandHours = [0 for node in range(0,numNodes)]
