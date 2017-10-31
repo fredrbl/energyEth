@@ -57,16 +57,16 @@ supplyHours = (np.array(supplyHours)).transpose()
 
 def matching(supplyHours, demandPrices):
     sortedList = [[] for t in range(0, steps)]
-    addressFrom = []
-    addressTo = []
+    addressFrom = [[] for t in range(0, steps)]
+    addressTo = [[] for t in range(0, steps)]
     for t in range(0,steps):
         ## bueno. sort, y create a list of index equal to the list.
         for i in range(0, np.sum(supplyHours[t])):
             sortedList[t].append(demandPrices[t].tolist().index(min(demandPrices[t])))
             demandPrices[t][sortedList[t][i]] = 999 # because a node not can give more in one step
-            addressFrom.append(sortedList[t][i])
-            addressTo.append(supplyHours[t].tolist().index(1))
-            supplyHours[t][addressTo] = 0
+            addressFrom[t].append(sortedList[t][i])
+            addressTo[t].append(supplyHours[t].tolist().index(1))
+            supplyHours[t][supplyHours[t].tolist().index(1)] = 0
             demandHours[sortedList[t][i]] = demandHours[sortedList[t][i]] - 1
             if (demandHours[sortedList[t][i]] == 0): # The demand node is empty, and must be set to 999
                 for t2 in range(i, steps):
@@ -74,5 +74,8 @@ def matching(supplyHours, demandPrices):
         print(addressFrom)
         print(addressTo)
         print(sortedList[t])
-        Duration.transact().checkAndTransfer(sortedList[t], addressFrom, addressTo, t, FlexCoin.address)
+        if(len(sortedList[t]) > 0):
+            Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], t, FlexCoin.address)
+        print(FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[1]))
+        print(FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[2]))
     return sortedList
