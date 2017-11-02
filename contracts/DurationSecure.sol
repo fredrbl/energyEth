@@ -1,7 +1,7 @@
 import "./FlexCoin.sol";
 
 pragma solidity ^0.4.11;
-contract Duration {
+contract DurationSecure {
 
     struct Node {
         address owner;
@@ -24,8 +24,7 @@ contract Duration {
         numNodes = numNodes + 1;
         // si no functiona con array como ingreso, pone un uint 01010111000.
     }
-    // gas cost: 206 205
-    // lo tengo que Comprobar contra gasTransactions(). receipt
+    // 206 205 gas
 
     // Quiza la supply puede involver una variable que dice algo sobre la probilidad.
     // Por ejemplo; Un supply mas pronto deberia tiene un probilidad mas alto.
@@ -43,10 +42,14 @@ contract Duration {
         if (sortedList.length > 1) {
         // Este puede ser equivocado! length puede dar length de un string/byte.
             for (i; i < (sortedList.length - 1); i++) {
+                if (nodes[sortedList[i]].demandPrices[timeStep] > nodes[sortedList[i + 1]].demandPrices[timeStep]) { return false; }
+                if (from[i] != nodes[sortedList[i]].nodeID || nodes[to[i]].supplyHours[timeStep] == 0) { return false; }
                 f.transferHouse(nodes[from[i]].owner, nodes[to[i]].owner, nodes[sortedList[sortedList.length - 1]].demandPrices[timeStep]);
             }
         }
+        if (from[i] != nodes[sortedList[i]].nodeID || nodes[to[i]].supplyHours[timeStep] == 0) { return false; }
         f.transferHouse(nodes[from[i]].owner, nodes[to[i]].owner, nodes[from[i]].demandPrices[timeStep]);
+        //action for element when i => last element
     }
-    // gas cost: 59033
+    // 62 551 gas
 }

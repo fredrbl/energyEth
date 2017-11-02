@@ -28,6 +28,7 @@ contract FlexCoin {
         h.smartMeter = msg.sender; // This must be set when implementing system, and have no function here. Solely an example, and msg.sender is not correct.
         h.flexCoinBalance = 200000000;
     }
+    // gas cost: 37 041
 
     function getHouse(address _address) public constant returns (address, uint) {
         return (houses[_address].smartMeter, houses[_address].flexCoinBalance);
@@ -40,5 +41,6 @@ contract FlexCoin {
         houses[_to].flexCoinBalance += _amount;                           // Add the same to the recipient
         Transfer(_from, _to, _amount);
     }
+    // gas cost: 37 878
 
 }
