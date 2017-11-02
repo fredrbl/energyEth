@@ -7,14 +7,18 @@ contract Duration {
         address owner;
         uint nodeID;
         uint numDemandHours;
-        uint[3] demandPrices;
-        uint[3] supplyHours;
+        uint[] demandPrices;
+        uint[] supplyHours;
     }
 
     uint public numNodes;
     mapping(uint => Node) public nodes;
+ // Bueno. Que quiero hacer para manaña?
+ 1. probar la cosa sin y con seguridad
+ 2. Mostrar la asumpciones
+ 3. How simulate it? First 
 
-    function setNode(uint _numDemandHours, uint[3] _demandPrices, uint[3] _supplyHours) public {
+    function setNode(uint _numDemandHours, uint[] _demandPrices, uint[] _supplyHours) public {
         Node n = nodes[numNodes];
         n.owner = msg.sender;
         n.nodeID = numNodes;
@@ -29,17 +33,8 @@ contract Duration {
     // Por ejemplo; Un supply mas pronto deberia tiene un probilidad mas alto.
     // Que vas a hacer con lo? Combina alto prob aqui con alto prob abajo? hmm.
 
-    function getNode(uint _nodeID) constant public returns(address, uint, uint[], uint[]){
-        uint[] memory copyDemandPrices = new uint[](3);
-        uint[] memory copySupplyHours = new uint[](3);
-
-        copyDemandPrices[0] = nodes[_nodeID].demandPrices[0];
-        copyDemandPrices[1] = nodes[_nodeID].demandPrices[1];
-        copyDemandPrices[2] = nodes[_nodeID].demandPrices[2];
-        copySupplyHours[0] = nodes[_nodeID].supplyHours[0];
-        copySupplyHours[1] = nodes[_nodeID].supplyHours[1];
-        copySupplyHours[2] = nodes[_nodeID].supplyHours[2];
-        return (nodes[_nodeID].owner, nodes[_nodeID].numDemandHours, copyDemandPrices, copySupplyHours);
+    function getNode(uint _nodeID, uint _timeStep) constant public returns(address, uint, uint, uint){
+        return (nodes[_nodeID].owner, nodes[_nodeID].numDemandHours, nodes[_nodeID].demandPrices[_timeStep], nodes[_nodeID].supplyHours[_timeStep]);
     }
 
 

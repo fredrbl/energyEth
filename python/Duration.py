@@ -51,7 +51,8 @@ for i in range(0,numNodes):
         Duration.transact({'from': web3.eth.accounts[i]}).setNode(0, [999, 999, 999], [1, 0, 1])
     elif(i == 3):
         Duration.transact({'from': web3.eth.accounts[i]}).setNode(0, [999, 999, 999], [1, 0, 0])
-    owner[i], demandHours[i], demandPrices[i], supplyHours[i] = Duration.call().getNode(i)
+    for t in range(0, steps):
+        owner[i], demandHours[i], demandPrices[i][t], supplyHours[i][t] = Duration.call().getNode(i, t)
 demandPrices = (np.array(demandPrices)).transpose()
 supplyHours = (np.array(supplyHours)).transpose()
 
