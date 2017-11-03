@@ -3,6 +3,7 @@ import json
 import FlexCoin
 import numpy as np
 import random
+import copy
 
 ############### ASSUMPTIONS ###############
 # This is a very simplified method. The following assumptions hold;
@@ -31,7 +32,6 @@ demandHours = [0 for i in range(0, numNodes)]
 demandPrices = [[999 for x in range(0, steps)] for y in range(0, numNodes)]
 supplyHours = [[0 for x in range(0, steps)] for y in range(0, numNodes)]
 # getter for the demand y supplyHours...!
-systemData()
 
 def setSystemData(_numSupply, _numDemand, _steps):
     ## 4 nodes with inflexible supply
@@ -60,37 +60,35 @@ def setSystemData(_numSupply, _numDemand, _steps):
             demandString[d] = str(random.randint(150, 600)) + ',' + demandString[d]
         Duration.transact({'from': web3.eth.accounts[d + s]}).setNode(demandHours[d], demandString[d], '')
 
-def getSystemData(_numNodes):
-    owner = ["0" for i in range(0, numNodes)]
-    for t in range(0, steps):
-        owner[i], demandHours[i], demandPrices[i][t], supplyHours[i][t] = Duration.call().getNode(i, t)
+def getSystemData(_numNodes, _steps):
+    owner = ["0" for i in range(0, _numNodes)]
+    demandHours = [0 for i in range(0, _numNodes)]
+    tempDemandPrices = [['' for x in range(0, _steps)] for y in range(0, _numNodes)]
+    endDemandPrices = [[999 for x in range(0, _steps)] for y in range(0, _numNodes)]
+    endSupplyHours = [[0 for x in range(0, _steps)] for y in range(0, _numNodes)]
+    for n in range(0, _numNodes):
+        owner[n], demandHours[n], demandPrices, supplyHours = Duration.call().getNode(n)
+        i = 0 # i here is the iteratior that converts the strings to integers
 
-    demandPrices = (np.array(demandPrices)).transpose()
-    supplyHours = (np.array(supplyHours)).transpose()
-    return (supplyHours, demandPrices)
+        for t in range(0, _steps):
+            if(supplyHours == ''):
+                while (demandPrices[i] != ','):
+                    tempDemandPrices[n][t] =  tempDemandPrices[n][t] + demandPrices[i]
+                    i = i + 1
+                i = i + 1
+                endDemandPrices[n][t] = int(tempDemandPrices[n][t])
+            else:
+                endSupplyHours[n][t] = int(supplyHours[t])
+    endDemandPrices = (np.array(endDemandPrices)).transpose()
+    endSupplyHours = (np.array(endSupplyHours)).transpose()
 
-for i in range(0,numNodes):
-    systemData(numNodes,)
-    if (i == 0):
-        Duration.transact({'from': web3.eth.accounts[i]}).setNode(2, [32, 21, 43], [])
-    elif(i == 1):
-        Duration.transact({'from': web3.eth.accounts[i]}).setNode(1, [15, 19, 60], [])
-    elif(i == 2):
-        Duration.transact({'from': web3.eth.accounts[i]}).setNode(0, [], [1, 0, 1])
-    elif(i == 3):
-        Duration.transact({'from': web3.eth.accounts[i]}).setNode(0, [], [1, 0, 0])
-    for t in range(0, steps):
-        if (i == 0 && i == 1):
-            owner[i], demandHours[i], demandPrices[i][t], _ = Duration.call().getNode(i, t)
-        else:
-            owner[i], demandHours[i], _, supplyHours[i][t] = Duration.call().getNode(i, t)
-demandPrices = (np.array(demandPrices)).transpose()
-supplyHours = (np.array(supplyHours)).transpose()
+    return (owner, demandHours, endSupplyHours, endDemandPrices)
 
 def matching(supplyHours, demandPrices):
     sortedList = [[] for t in range(0, steps)]
     addressFrom = [[] for t in range(0, steps)]
     addressTo = [[] for t in range(0, steps)]
+    copyDemandPrices = copy.deepcopy(demandPrices.tolist())
     for t in range(0,steps):
         ## bueno. sort, y create a list of index equal to the list.
         for i in range(0, np.sum(supplyHours[t])):
@@ -103,11 +101,12 @@ def matching(supplyHours, demandPrices):
             if (demandHours[sortedList[t][i]] == 0): # The demand node is empty, and must be set to 999
                 for t2 in range(i, steps):
                     demandPrices[t2][sortedList[t][i]] = 999
-        print(addressFrom)
-        print(addressTo)
+        print(addressFrom[t])
+        print(addressTo[t])
         print(sortedList[t])
+        print(copyDemandPrices[t])
         if(len(sortedList[t]) > 0):
-            Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], t, FlexCoin.address)
+            Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], copyDemandPrices[t], t, FlexCoin.address)
         print(FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[1]))
         print(FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[2]))
     return sortedList

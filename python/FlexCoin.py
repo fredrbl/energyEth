@@ -11,9 +11,9 @@ abi = values['FlexCoin']['abi']
 address = input("What is the contract address? - FlexCoin: ")
 FlexCoin = web3.eth.contract(address, abi = abi)
 numHouses = FlexCoin.call().numHouses()
-#if(numHouses == 0):
-for i in range(len(web3.personal.listAccounts)):
-    FlexCoin.transact({'from': web3.eth.accounts[i]}).newHouse()
+if(numHouses == 0):
+    for i in range(len(web3.personal.listAccounts)):
+        FlexCoin.transact({'from': web3.eth.accounts[i]}).newHouse()
 
 ## This could also control the batteries!
 ## Now, this controls the money and batteries. If money changes, changes are made in bc

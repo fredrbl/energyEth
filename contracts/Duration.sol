@@ -7,14 +7,14 @@ contract Duration {
         address owner;
         uint nodeID;
         uint numDemandHours;
-        uint[] demandPrices;
-        uint[] supplyHours;
+        string demandPrices;
+        string supplyHours;
     }
 
     uint public numNodes;
     mapping(uint => Node) public nodes;
 
-    function setNode(uint _numDemandHours, uint[] _demandPrices, uint[] _supplyHours) public {
+    function setNode(uint _numDemandHours, string _demandPrices, string _supplyHours) public {
         Node n = nodes[numNodes];
         n.owner = msg.sender;
         n.nodeID = numNodes;
@@ -26,16 +26,17 @@ contract Duration {
     }
     // gas cost: 206 205
     // lo tengo que Comprobar contra gasTransactions(). receipt
-
+// 131501 con 5-6 steps
+// 198 000 con 20 steps
     // Quiza la supply puede involver una variable que dice algo sobre la probilidad.
     // Por ejemplo; Un supply mas pronto deberia tiene un probilidad mas alto.
     // Que vas a hacer con lo? Combina alto prob aqui con alto prob abajo? hmm.
 
-    function getNode(uint _nodeID, uint _timeStep) constant public returns(address, uint, uint, uint){
-        return (nodes[_nodeID].owner, nodes[_nodeID].numDemandHours, nodes[_nodeID].demandPrices[_timeStep], nodes[_nodeID].supplyHours[_timeStep]);
+    function getNode(uint _nodeID) constant public returns(address, uint, string, string){
+        return (nodes[_nodeID].owner, nodes[_nodeID].numDemandHours, nodes[_nodeID].demandPrices, nodes[_nodeID].supplyHours);
     }
 
-    function checkAndTransfer(uint[] sortedList, uint[] from, uint[] to, uint timeStep, address contractAddress) public returns(bool success) {
+    function checkAndTransfer(uint[] sortedList, uint[] from, uint[] to, uint[] price, uint timeStep, address contractAddress) public returns(bool success) {
         // Because solidity not can receive two dimension list, we must call this for every time step
         FlexCoin f = FlexCoin(contractAddress);
 
@@ -43,10 +44,10 @@ contract Duration {
         if (sortedList.length > 1) {
         // Este puede ser equivocado! length puede dar length de un string/byte.
             for (i; i < (sortedList.length - 1); i++) {
-                f.transferHouse(nodes[from[i]].owner, nodes[to[i]].owner, nodes[sortedList[sortedList.length - 1]].demandPrices[timeStep]);
+                f.transferHouse(nodes[from[i]].owner, nodes[to[i]].owner, price[from[i]]);
             }
         }
-        f.transferHouse(nodes[from[i]].owner, nodes[to[i]].owner, nodes[from[i]].demandPrices[timeStep]);
+        f.transferHouse(nodes[from[i]].owner, nodes[to[i]].owner, price[from[i]]);
     }
     // gas cost: 59033
 }

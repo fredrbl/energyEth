@@ -1,6 +1,6 @@
 
-
 import random
+
 
 ## 10 nodes
 numNodes = 10
