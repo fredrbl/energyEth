@@ -4,6 +4,7 @@ import FlexCoin
 import numpy as np
 import random
 import copy
+import matplotlib.pyplot as plt
 
 ############### ASSUMPTIONS ###############
 # This is a very simplified method. The following assumptions hold;
@@ -33,18 +34,65 @@ demandPrices = [[999 for x in range(0, steps)] for y in range(0, numNodes)]
 supplyHours = [[0 for x in range(0, steps)] for y in range(0, numNodes)]
 # getter for the demand y supplyHours...!
 
+### MAIN ###
+
+def nodeSensitivity():
+    # results is both marginal prices and total cost
+    nodes = range(4, 100, 10)
+    cost = [0 for n in range(0, 100)]
+    for n in nodes:
+    ## to open many accounts-> dont know. wait for response during your trip. Mientras ese, construir tu codigo
+        # primero=> solo duration.
+        # alternativo 2 => estimateGas() * n
+        # TEST: cost[n] = 50 + 2 * n
+        margCost[n] = cost[n] - cost[n - 1]
+    #### Plot la diferencia, y mostrar la marginal crecimiento.
+    node  = plt.figure(1)
+    cost = np.asarray(cost)
+    x = np.arange(4, 100, 10)
+    yCost = cost[x]
+    yMargCost = margCost[x]
+    plt.xticks(np.arange(x.min(), x.max(), 10))
+    plt.plot(x, yCost, yMargCost, '-o')
+    node.show()
+    ## quiza mostrarlo en dos plots..
+
+def stepSensitivity():
+    # results is both marginal prices and total cost
+    steps = range(24, 240, 15)
+    cost = [0 for t in range(0, 240)]
+    for t in steps:
+    ## to open many accounts-> dont know. wait for response during your trip. Mientras ese, construir tu codigo
+        # primero=> solo duration.
+        # alternativo 2 => estimateGas() * n
+        # TEST: cost[n] = 50 + 2 * n
+        margCost[n] = cost[n] - cost[n - 1]
+    #### Plot la diferencia, y mostrar la marginal crecimiento.
+    node  = plt.figure(1)
+    cost = np.asarray(cost)
+    x = np.arange(24, 240, 15)
+    yCost = cost[x]
+    yMargCost = margCost[x]
+    plt.xticks(np.arange(x.min(), x.max(), 15))
+    plt.plot(x, yCost, yMargCost, '-o')
+    node.show()
+    ## quiza mostrarlo en dos plots..
+
+#### FUNCTIONS ####
+
 def setSystemData(_numSupply, _numDemand, _steps):
     ## 4 nodes with inflexible supply
     numSupply = 4
     binary = ['' for i in range(0, numSupply)]
     total = 0
+    cost = 0
     for s in range (0, numSupply):
         for t in range(0,steps):
             temp = random.randint(0, 1)
             binary[s] = str(temp)+ binary[s]
             total = total + temp # Total is the total supply we have to cover with demand
         Duration.transact({'from': web3.eth.accounts[s]}).setNode(0, '', binary[s])
-
+        cost = web3.eth.getTransaction('latest') + cost
     ## 6 nodes with flexible demand
     # The lowest and highest price is arbitralery set to 150 and 600
     numDemand = 6
@@ -59,6 +107,8 @@ def setSystemData(_numSupply, _numDemand, _steps):
         for t in range(0, steps):
             demandString[d] = str(random.randint(150, 600)) + ',' + demandString[d]
         Duration.transact({'from': web3.eth.accounts[d + s]}).setNode(demandHours[d], demandString[d], '')
+        cost = web3.eth.getTransaction('latest') + cost #hmm. no es correcto..? puedo usar estimateGas() for all
+    return cost
 
 def getSystemData(_numNodes, _steps):
     owner = ["0" for i in range(0, _numNodes)]
@@ -101,12 +151,7 @@ def matching(supplyHours, demandPrices):
             if (demandHours[sortedList[t][i]] == 0): # The demand node is empty, and must be set to 999
                 for t2 in range(i, steps):
                     demandPrices[t2][sortedList[t][i]] = 999
-        print(addressFrom[t])
-        print(addressTo[t])
-        print(sortedList[t])
-        print(copyDemandPrices[t])
         if(len(sortedList[t]) > 0):
             Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], copyDemandPrices[t], t, FlexCoin.address)
-        print(FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[1]))
-        print(FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[2]))
-    return sortedList
+        cost[t] = web3.eth.getTransaction('latest')
+    return sortedList, sum(cost)
