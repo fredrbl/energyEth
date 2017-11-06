@@ -23,17 +23,6 @@ abi = values['Duration']['abi']
 address = input("What is the contract address? - Duration: ")
 Duration = web3.eth.contract(address, abi = abi)
 
-steps = 24
-numNodes = 10
-numSupply = 4
-numDemand = 6
-
-owner = ["0" for i in range(0, numNodes)]
-demandHours = [0 for i in range(0, numNodes)]
-demandPrices = [[999 for x in range(0, steps)] for y in range(0, numNodes)]
-supplyHours = [[0 for x in range(0, steps)] for y in range(0, numNodes)]
-# getter for the demand y supplyHours...!
-
 ### MAIN ###
 
 def nodeSensitivity():
@@ -57,16 +46,19 @@ def nodeSensitivity():
     node.show()
     ## quiza mostrarlo en dos plots..
 
-def stepSensitivity():
+def stepSensitivity(_numSupply, _numDemand):
     # results is both marginal prices and total cost
+    # This is done with 10 nodes as standard
     steps = range(24, 240, 15)
     cost = [0 for t in range(0, 240)]
+    numNodes = _numSupply + _numDemand
     for t in steps:
     ## to open many accounts-> dont know. wait for response during your trip. Mientras ese, construir tu codigo
-        # primero=> solo duration.
-        # alternativo 2 => estimateGas() * n
-        # TEST: cost[n] = 50 + 2 * n
-        margCost[n] = cost[n] - cost[n - 1]
+        cost[t] = setSystemData(_numSupply, _numDemand, t) + cost[t]
+        _, demandHours, supplyHours, demandPrices = getSystemData(numNodes, t)
+        cost[t] = matching(owner, demandHours, supplyHours, demandPrices) + cost[t]
+        if (t > 24):
+            margCost[t] = cost[t] - cost[t - 15]
     #### Plot la diferencia, y mostrar la marginal crecimiento.
     node  = plt.figure(1)
     cost = np.asarray(cost)
@@ -82,32 +74,30 @@ def stepSensitivity():
 
 def setSystemData(_numSupply, _numDemand, _steps):
     ## 4 nodes with inflexible supply
-    numSupply = 4
-    binary = ['' for i in range(0, numSupply)]
+    binary = ['' for i in range(0, _numSupply)]
     total = 0
     cost = 0
-    for s in range (0, numSupply):
-        for t in range(0,steps):
-            temp = random.randint(0, 1)
-            binary[s] = str(temp)+ binary[s]
-            total = total + temp # Total is the total supply we have to cover with demand
-        Duration.transact({'from': web3.eth.accounts[s]}).setNode(0, '', binary[s])
-        cost = web3.eth.getTransaction('latest') + cost
+    for s in range (0, _numSupply):
+        for t in range(0,_steps):
+            tempBin = random.randint(0, 1)
+            binary[s] = str(tempBin)+ binary[s]
+            total = total + tempBin # Total is the total supply we have to cover with demand
+        tempCost = Duration.transact({'from': web3.eth.accounts[s]}).setNode(0, '', binary[s])
+        cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
     ## 6 nodes with flexible demand
     # The lowest and highest price is arbitralery set to 150 and 600
-    numDemand = 6
-    demandString = ['' for i in range(0, numDemand)]
-    demandHours = [0 for i in range(0, numDemand)]
+    demandString = ['' for i in range(0, _numDemand)]
+    demandHours = [0 for i in range(0, _numDemand)]
     i = 0
     while (total > sum(demandHours)):
         demandHours[i] = demandHours[i] + 1
         i = i + 1
-        if (i == numDemand): i = 0
-    for d in range(0, numDemand):
-        for t in range(0, steps):
+        if (i == _numDemand): i = 0
+    for d in range(0, _numDemand):
+        for t in range(0, _steps):
             demandString[d] = str(random.randint(150, 600)) + ',' + demandString[d]
-        Duration.transact({'from': web3.eth.accounts[d + s]}).setNode(demandHours[d], demandString[d], '')
-        cost = web3.eth.getTransaction('latest') + cost #hmm. no es correcto..? puedo usar estimateGas() for all
+        tempCost = Duration.transact({'from': web3.eth.accounts[d + s]}).setNode(demandHours[d], demandString[d], '')
+        cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
     return cost
 
 def getSystemData(_numNodes, _steps):
@@ -134,11 +124,12 @@ def getSystemData(_numNodes, _steps):
 
     return (owner, demandHours, endSupplyHours, endDemandPrices)
 
-def matching(supplyHours, demandPrices):
+def matching(owner, demandHours, supplyHours, demandPrices):
     sortedList = [[] for t in range(0, steps)]
     addressFrom = [[] for t in range(0, steps)]
     addressTo = [[] for t in range(0, steps)]
     copyDemandPrices = copy.deepcopy(demandPrices.tolist())
+    cost = 0
     for t in range(0,steps):
         ## bueno. sort, y create a list of index equal to the list.
         for i in range(0, np.sum(supplyHours[t])):
@@ -152,6 +143,6 @@ def matching(supplyHours, demandPrices):
                 for t2 in range(i, steps):
                     demandPrices[t2][sortedList[t][i]] = 999
         if(len(sortedList[t]) > 0):
-            Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], copyDemandPrices[t], t, FlexCoin.address)
-        cost[t] = web3.eth.getTransaction('latest')
-    return sortedList, sum(cost)
+            tempCost = Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], copyDemandPrices[t], t, FlexCoin.address)
+        cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
+    return cost
