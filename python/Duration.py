@@ -52,11 +52,13 @@ def stepSensitivity(_numSupply, _numDemand):
     steps = range(24, 240, 15)
     cost = [0 for t in range(0, 240)]
     numNodes = _numSupply + _numDemand
+    iterator = 0
     for t in steps:
     ## to open many accounts-> dont know. wait for response during your trip. Mientras ese, construir tu codigo
         cost[t] = setSystemData(_numSupply, _numDemand, t) + cost[t]
-        _, demandHours, supplyHours, demandPrices = getSystemData(numNodes, t)
-        cost[t] = matching(owner, demandHours, supplyHours, demandPrices) + cost[t]
+        owner, demandHours, supplyHours, demandPrices = getSystemData(numNodes, t, iterator)
+        cost[t] = matching(owner, demandHours, supplyHours, demandPrices, t) + cost[t]
+        iterator = iterator + 1
         if (t > 24):
             margCost[t] = cost[t] - cost[t - 15]
     #### Plot la diferencia, y mostrar la marginal crecimiento.
@@ -100,16 +102,16 @@ def setSystemData(_numSupply, _numDemand, _steps):
         cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
     return cost
 
-def getSystemData(_numNodes, _steps):
+def getSystemData(_numNodes, _steps, iterator):
     owner = ["0" for i in range(0, _numNodes)]
     demandHours = [0 for i in range(0, _numNodes)]
     tempDemandPrices = [['' for x in range(0, _steps)] for y in range(0, _numNodes)]
     endDemandPrices = [[999 for x in range(0, _steps)] for y in range(0, _numNodes)]
     endSupplyHours = [[0 for x in range(0, _steps)] for y in range(0, _numNodes)]
     for n in range(0, _numNodes):
-        owner[n], demandHours[n], demandPrices, supplyHours = Duration.call().getNode(n)
+        owner[n], demandHours[n], demandPrices, supplyHours = Duration.call().getNode(n + (iterator * _numNodes))
         i = 0 # i here is the iteratior that converts the strings to integers
-
+        print(len(supplyHours))
         for t in range(0, _steps):
             if(supplyHours == ''):
                 while (demandPrices[i] != ','):
@@ -121,15 +123,16 @@ def getSystemData(_numNodes, _steps):
                 endSupplyHours[n][t] = int(supplyHours[t])
     endDemandPrices = (np.array(endDemandPrices)).transpose()
     endSupplyHours = (np.array(endSupplyHours)).transpose()
-
+    print("game")
     return (owner, demandHours, endSupplyHours, endDemandPrices)
 
-def matching(owner, demandHours, supplyHours, demandPrices):
+def matching(owner, demandHours, supplyHours, demandPrices, steps):
     sortedList = [[] for t in range(0, steps)]
     addressFrom = [[] for t in range(0, steps)]
     addressTo = [[] for t in range(0, steps)]
     copyDemandPrices = copy.deepcopy(demandPrices.tolist())
     cost = 0
+    tempCost = ''
     for t in range(0,steps):
         ## bueno. sort, y create a list of index equal to the list.
         for i in range(0, np.sum(supplyHours[t])):
