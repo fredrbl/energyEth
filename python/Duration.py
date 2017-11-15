@@ -27,32 +27,52 @@ Duration = web3.eth.contract(address, abi = abi)
 
 def nodeSensitivity():
     # results is both marginal prices and total cost
-    nodes = range(4, 100, 10)
-    cost = [0 for n in range(0, 100)]
+    nodes = range(4, 10, 1)
+    cost = [0 for n in range(0, 10)]
+    t = 24
+    iterator = 0
+    margCost = [0 for t in range(0, 144)]
     for n in nodes:
     ## to open many accounts-> dont know. wait for response during your trip. Mientras ese, construir tu codigo
-        # primero=> solo duration.
-        # alternativo 2 => estimateGas() * n
-        # TEST: cost[n] = 50 + 2 * n
-        margCost[n] = cost[n] - cost[n - 1]
+        if(n % 2 == 0):
+            cost[n] = setSystemData(int(n/2), int(n/2), t) + cost[n]
+            owner, demandHours, supplyHours, demandPrices = getSystemData(n, t, iterator)
+            cost[n] = matching(owner, demandHours, supplyHours, demandPrices, t) + cost[n]
+            iterator = iterator + 1
+            if (n > 2):
+                margCost[n] = cost[n] - cost[n - 1]
+        else:
+            cost[n] = setSystemData(int((n + 1)/2), int((n - 1)/2), t) + cost[n]
+            owner, demandHours, supplyHours, demandPrices = getSystemData(n, t, iterator)
+            cost[n] = matching(owner, demandHours, supplyHours, demandPrices, t) + cost[n]
+            iterator = iterator + 1
+            if (n > 2):
+                margCost[n] = cost[n] - cost[n - 1]
     #### Plot la diferencia, y mostrar la marginal crecimiento.
-    node  = plt.figure(1)
     cost = np.asarray(cost)
-    x = np.arange(4, 100, 10)
+    margCost = np.asarray(margCost)
+    x = np.arange(2, 10, 1)
     yCost = cost[x]
     yMargCost = margCost[x]
-    plt.xticks(np.arange(x.min(), x.max(), 10))
-    plt.plot(x, yCost, yMargCost, '-o')
-    node.show()
-    ## quiza mostrarlo en dos plots..
+
+    costPlt  = plt.figure(1)
+    plt.xticks(np.arange(x.min(), x.max(), 1))
+    plt.plot(x, yCost, '-o')
+    costPlt.show()
+
+    margPlt = plt.figure(2)
+    plt.xticks(np.arange(x.min(), x.max(), 1))
+    plt.plot(x, yMargCost, '-o')
+    margPlt.show()
 
 def stepSensitivity(_numSupply, _numDemand):
     # results is both marginal prices and total cost
     # This is done with 10 nodes as standard
-    steps = range(24, 240, 15)
-    cost = [0 for t in range(0, 240)]
+    steps = range(24, 144, 24)
+    cost = [0 for t in range(0, 144)]
     numNodes = _numSupply + _numDemand
     iterator = 0
+    margCost = [0 for t in range(0, 144)]
     for t in steps:
     ## to open many accounts-> dont know. wait for response during your trip. Mientras ese, construir tu codigo
         cost[t] = setSystemData(_numSupply, _numDemand, t) + cost[t]
@@ -60,18 +80,25 @@ def stepSensitivity(_numSupply, _numDemand):
         cost[t] = matching(owner, demandHours, supplyHours, demandPrices, t) + cost[t]
         iterator = iterator + 1
         if (t > 24):
-            margCost[t] = cost[t] - cost[t - 15]
+            margCost[t] = cost[t] - cost[t - 24]
     #### Plot la diferencia, y mostrar la marginal crecimiento.
-    node  = plt.figure(1)
     cost = np.asarray(cost)
-    x = np.arange(24, 240, 15)
+    margCost = np.asarray(margCost)
+    x = np.arange(24, 144, 24)
     yCost = cost[x]
     yMargCost = margCost[x]
-    plt.xticks(np.arange(x.min(), x.max(), 15))
-    plt.plot(x, yCost, yMargCost, '-o')
-    node.show()
-    ## quiza mostrarlo en dos plots..
 
+    costPlt  = plt.figure(1)
+    plt.xticks(np.arange(x.min(), x.max(), 24))
+    plt.plot(x, yCost, '-o')
+    costPlt.show()
+
+    margPlt = plt.figure(2)
+    plt.xticks(np.arange(x.min(), x.max(), 24))
+    plt.plot(x, yMargCost, '-o')
+    margPlt.show()
+
+    ## quiza mostrarlo en dos plots..
 #### FUNCTIONS ####
 
 def setSystemData(_numSupply, _numDemand, _steps):
@@ -109,9 +136,10 @@ def getSystemData(_numNodes, _steps, iterator):
     endDemandPrices = [[999 for x in range(0, _steps)] for y in range(0, _numNodes)]
     endSupplyHours = [[0 for x in range(0, _steps)] for y in range(0, _numNodes)]
     for n in range(0, _numNodes):
+        # HERE IS THE FAULT
         owner[n], demandHours[n], demandPrices, supplyHours = Duration.call().getNode(n + (iterator * _numNodes))
         i = 0 # i here is the iteratior that converts the strings to integers
-        print(len(supplyHours))
+        print(demandPrices)
         for t in range(0, _steps):
             if(supplyHours == ''):
                 while (demandPrices[i] != ','):
@@ -123,6 +151,8 @@ def getSystemData(_numNodes, _steps, iterator):
                 endSupplyHours[n][t] = int(supplyHours[t])
     endDemandPrices = (np.array(endDemandPrices)).transpose()
     endSupplyHours = (np.array(endSupplyHours)).transpose()
+    print(demandHours)
+    print(endSupplyHours)
     print("game")
     return (owner, demandHours, endSupplyHours, endDemandPrices)
 
