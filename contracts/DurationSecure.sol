@@ -1,3 +1,4 @@
+
 import "./FlexCoin.sol";
 
 pragma solidity ^0.4.11;
@@ -30,8 +31,13 @@ contract DurationSecure {
     // Por ejemplo; Un supply mas pronto deberia tiene un probilidad mas alto.
     // Que vas a hacer con lo? Combina alto prob aqui con alto prob abajo? hmm.
 
-    function getNode(uint _nodeID, uint _timeStep) constant public returns(address, uint, uint, uint){
-        return (nodes[_nodeID].owner, nodes[_nodeID].numDemandHours, nodes[_nodeID].demandPrices[_timeStep], nodes[_nodeID].supplyHours[_timeStep]);
+    function getNode(uint _nodeID, uint timeStep, uint nodeFlag) constant public returns(address, uint, uint, uint){
+        if (nodeFlag == 0){ // Here, the node is a supply node
+            return (nodes[_nodeID].owner, nodes[_nodeID].numDemandHours, nodes[_nodeID].demandPrices[0], nodes[_nodeID].supplyHours[timeStep]);
+        }
+        else {
+            return (nodes[_nodeID].owner, nodes[_nodeID].numDemandHours, nodes[_nodeID].demandPrices[timeStep], nodes[_nodeID].supplyHours[0]);
+        }
     }
 
     function checkAndTransfer(uint[] sortedList, uint[] from, uint[] to, uint timeStep, address contractAddress) public returns(bool success) {

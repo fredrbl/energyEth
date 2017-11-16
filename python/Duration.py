@@ -27,7 +27,7 @@ Duration = web3.eth.contract(address, abi = abi)
 
 def nodeSensitivity():
     # results is both marginal prices and total cost
-    nodes = range(4, 10, 1)
+    nodes = range(2, 10, 1)
     cost = [0 for n in range(0, 10)]
     t = 24
     iterator = 0
@@ -48,6 +48,8 @@ def nodeSensitivity():
             iterator = iterator + 1
             if (n > 2):
                 margCost[n] = cost[n] - cost[n - 1]
+        print("node done")
+
     #### Plot la diferencia, y mostrar la marginal crecimiento.
     cost = np.asarray(cost)
     margCost = np.asarray(margCost)
@@ -113,6 +115,7 @@ def setSystemData(_numSupply, _numDemand, _steps):
             total = total + tempBin # Total is the total supply we have to cover with demand
         tempCost = Duration.transact({'from': web3.eth.accounts[s]}).setNode(0, '', binary[s])
         cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
+    print(binary)
     ## 6 nodes with flexible demand
     # The lowest and highest price is arbitralery set to 150 and 600
     demandString = ['' for i in range(0, _numDemand)]
@@ -127,6 +130,8 @@ def setSystemData(_numSupply, _numDemand, _steps):
             demandString[d] = str(random.randint(150, 600)) + ',' + demandString[d]
         tempCost = Duration.transact({'from': web3.eth.accounts[d + s]}).setNode(demandHours[d], demandString[d], '')
         cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
+    print(demandString)
+    print(demandHours)
     return cost
 
 def getSystemData(_numNodes, _steps, iterator):
@@ -136,10 +141,16 @@ def getSystemData(_numNodes, _steps, iterator):
     endDemandPrices = [[999 for x in range(0, _steps)] for y in range(0, _numNodes)]
     endSupplyHours = [[0 for x in range(0, _steps)] for y in range(0, _numNodes)]
     for n in range(0, _numNodes):
-        # HERE IS THE FAULT
-        owner[n], demandHours[n], demandPrices, supplyHours = Duration.call().getNode(n + (iterator * _numNodes))
-        i = 0 # i here is the iteratior that converts the strings to integers
+        # HERE IS THE FAULT, YOURE FINDING THE WRONG NODE.. USE NUMNODES TO FIND STARTING POINT
+        lastNodeID = Duration.call().numNodes() - 1
+        firstNodeID = lastNodeID - _numNodes + 1
+        owner[n], demandHours[n], demandPrices, supplyHours = Duration.call().getNode(firstNodeID + n)
+        print("start")
         print(demandPrices)
+        print(demandHours)
+        print(supplyHours)
+        print("end")
+        i = 0 # i here is the iteratior that converts the strings to integers
         for t in range(0, _steps):
             if(supplyHours == ''):
                 while (demandPrices[i] != ','):
@@ -151,8 +162,6 @@ def getSystemData(_numNodes, _steps, iterator):
                 endSupplyHours[n][t] = int(supplyHours[t])
     endDemandPrices = (np.array(endDemandPrices)).transpose()
     endSupplyHours = (np.array(endSupplyHours)).transpose()
-    print(demandHours)
-    print(endSupplyHours)
     print("game")
     return (owner, demandHours, endSupplyHours, endDemandPrices)
 
@@ -177,5 +186,5 @@ def matching(owner, demandHours, supplyHours, demandPrices, steps):
                     demandPrices[t2][sortedList[t][i]] = 999
         if(len(sortedList[t]) > 0):
             tempCost = Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], copyDemandPrices[t], t, FlexCoin.address)
-        cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
+            cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
     return cost
