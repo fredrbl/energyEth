@@ -141,7 +141,6 @@ def getSystemData(_numNodes, _steps, iterator):
     endDemandPrices = [[999 for x in range(0, _steps)] for y in range(0, _numNodes)]
     endSupplyHours = [[0 for x in range(0, _steps)] for y in range(0, _numNodes)]
     for n in range(0, _numNodes):
-        # HERE IS THE FAULT, YOURE FINDING THE WRONG NODE.. USE NUMNODES TO FIND STARTING POINT
         lastNodeID = Duration.call().numNodes() - 1
         firstNodeID = lastNodeID - _numNodes + 1
         owner[n], demandHours[n], demandPrices, supplyHours = Duration.call().getNode(firstNodeID + n)
@@ -163,6 +162,7 @@ def getSystemData(_numNodes, _steps, iterator):
     endDemandPrices = (np.array(endDemandPrices)).transpose()
     endSupplyHours = (np.array(endSupplyHours)).transpose()
     print("game")
+    print(endDemandPrices)
     return (owner, demandHours, endSupplyHours, endDemandPrices)
 
 def matching(owner, demandHours, supplyHours, demandPrices, steps):

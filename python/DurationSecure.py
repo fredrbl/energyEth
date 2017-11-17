@@ -42,7 +42,7 @@ def nodeSensitivity():
             if (n > 2):
                 margCost[n] = cost[n] - cost[n - 1]
         else:
-            cost[n] = setSystemData(int((n + 1)/2), int((n - 1)/2), t) + cost[n]
+            cost[n] = setSystemData(int((n - 1)/2), int((n + 1)/2), t) + cost[n]
             owner, demandHours, supplyHours, demandPrices = getSystemData(n, t, iterator)
             cost[n] = matching(owner, demandHours, supplyHours, demandPrices, t) + cost[n]
             iterator = iterator + 1
@@ -130,15 +130,13 @@ def setSystemData(_numSupply, _numDemand, _steps):
             demandPrices[d][t] = random.randint(150, 600)
         tempCost = Duration.transact({'from': web3.eth.accounts[d + s]}).setNode(demandHours[d], demandPrices[d], [0])
         cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
-    print(demandPrices)
-    print(demandHours)
     return cost
 
 def getSystemData(_numNodes, _steps, iterator):
     owner = ["0" for i in range(0, _numNodes)]
     demandHours = [0 for i in range(0, _numNodes)]
-    demandPrices = [[999 for x in range(0, _steps)] for y in range(0, _numNodes)]
-    supplyHours = [[0 for x in range(0, _steps)] for y in range(0, _numNodes)]
+    demandPrices = [[] for y in range(0, _numNodes)]
+    supplyHours = [[] for y in range(0, _numNodes)]
     testDemandPrices = [0 for y in range(0, _numNodes)]
     testSupplyHours = [0 for y in range(0, _numNodes)]
     counterDemand = 0
@@ -147,38 +145,19 @@ def getSystemData(_numNodes, _steps, iterator):
         lastNodeID = Duration.call().numNodes() - 1
         firstNodeID = lastNodeID - _numNodes + 1
         owner[n], demandHours[n], testDemandPrices[n], testSupplyHours[n] = Duration.call().getNode(firstNodeID + n, 0, 1)
-        print("1st stage")
         if(demandHours[n] != 0):
-            supplyHours[n] = 0
             for t in range(0, _steps):
-                print("anything1?")
-                print(Duration.call().numNodes())
-                print(firstNodeID + n)
-                print(Duration.call().getNode(firstNodeID + n, t, 1))
-                print()
-                c = Duration.call().getNode(firstNodeID + n, t, 1)
-                print(type(c[2]))
-                print(counterDemand)
-                print(type(counterDemand))
-USE APPEND
-                print(type(demandPrices[counterDemand][t]))
-                demandPrices[counterDemand][t] = c[2]
-            counterDemand = counterDemand + 1
+                supplyHours[n].append(0)
+                demandPrices[n].append(Duration.call().getNode(firstNodeID + n, t, 1)[2])
         else:
-            demandPrices[n] = 0
             for t in range(0, _steps):
-                print("anything2?")
-                _, _, _, supplyHours[counterSupply][t]= Duration.call().getNode(firstNodeID + n, t, 0)
-            counterSupply = counterSupply + 1
-        print("start")
-        print(demandPrices)
-        print(demandHours)
-        print(supplyHours)
-        print("end")
+                demandPrices[n].append(999)
+                supplyHours[n].append(Duration.call().getNode(firstNodeID + n, t, 0)[3])
+
     demandPrices = (np.array(demandPrices)).transpose()
     supplyHours = (np.array(supplyHours)).transpose()
-    print("game")
-    return (owner, demandHours, endSupplyHours, endDemandPrices)
+    print(demandPrices)
+    return (owner, demandHours, supplyHours, demandPrices)
 
 def matching(owner, demandHours, supplyHours, demandPrices, steps):
     sortedList = [[] for t in range(0, steps)]
@@ -199,7 +178,11 @@ def matching(owner, demandHours, supplyHours, demandPrices, steps):
             if (demandHours[sortedList[t][i]] == 0): # The demand node is empty, and must be set to 999
                 for t2 in range(i, steps):
                     demandPrices[t2][sortedList[t][i]] = 999
+        print(len(sortedList[t]))
         if(len(sortedList[t]) > 0):
-            tempCost = Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], copyDemandPrices[t], t, FlexCoin.address)
+            print(sortedList)
+            print(addressTo)
+            print(addressFrom)
+            tempCost = Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], t, FlexCoin.address)
             cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
     return cost
