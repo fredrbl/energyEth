@@ -41,12 +41,13 @@ contract DurationSecure {
         uint i = 0;
         if (sortedList.length > 1) {
         // Este puede ser equivocado! length puede dar length de un string/byte.
+        ALSO! CHECK THAT THE PRICES FROM THE CHOSEN NODES ARE LOWER/HIGHER THAN THE CLEARING PRICE!
             for (i; i < (sortedList.length - 1); i++) {
                 if (nodes[sortedList[i]].demandPrices[timeStep] > nodes[sortedList[i + 1]].demandPrices[timeStep]) { return false; }
                 if (from[i] != nodes[sortedList[i]].nodeID || nodes[to[i]].supplyHours[timeStep] == 0) { return false; }
                 f.transferHouse(nodes[from[i]].owner, nodes[to[i]].owner, nodes[sortedList[sortedList.length - 1]].demandPrices[timeStep]);
             }
-        }
+        }S
         if (from[i] != nodes[sortedList[i]].nodeID || nodes[to[i]].supplyHours[timeStep] == 0) { return false; }
         f.transferHouse(nodes[from[i]].owner, nodes[to[i]].owner, nodes[from[i]].demandPrices[timeStep]);
         //action for element when i => last element

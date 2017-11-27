@@ -3,12 +3,9 @@ pragma solidity ^0.4.11;
 
 // This contract must build the coin that should be used in the different trading mechanisms.
 // If other things are common for the mechanisms, this is the place to include the things
-// make a struct in the other contracts that is a child, which has other features also...?yes
 
 contract FlexCoin {
-    // This is the shit. This is where all the information is stored. All functions exists in the other contracts.
-    // initialisation of the system => giving all addresses flexCoins.
-    // This contract must hold all the information--> house! yesss.
+
     struct House {
         address owner;
         address smartMeter;

@@ -1,9 +1,5 @@
 pragma solidity ^0.4.11;
 import "./FlexCoin.sol";
-// Can I inhere this contract to use the same flexCoins? HOW? later...->
-// One idea is to make the house and flexcoins as a seperate contract
-// Then, all the trading contracts could inherence the properties
-// A house needs address, a smart meter address, and a flexcoinBalance
 
 contract FutureBlock{
 
@@ -134,7 +130,6 @@ contract FutureBlock{
                 }
             }
         }
-        // Does it give any research value to include algorithm that fixes the situation when a node have insufficient funds?
         if (true){
             offers[_offerNr].fulfilled = true;
         }
@@ -147,15 +142,6 @@ contract FutureBlock{
         if ((offers[_offerNr].offerAmount < 0 && _amount < 0) || (offers[_offerNr].offerAmount > 0 && _amount > 0) ){
             newOffer(_amount, _startInterval, _endInterval);
         }
-
-        // Now, the batteries must be warned that the amount have changed
-        // -> batteries must be warned through correction
-        // -> flexcoins must be changed at both parties
-        // !! How to value the correction? What should be payed? The fee between wholesale and flexprice?
-
-        // Either a payment here could be made, or at the finish. If the finish, amount and interval must be stored
-        // two changes=> changes amount in flexbal four times, and sends two events.
-        // because of this, I choose to do multiple transactions. its cheaper. dont need the retrievement!
     }
 
 }
