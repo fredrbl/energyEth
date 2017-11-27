@@ -1,3 +1,4 @@
+
 import "./FlexCoin.sol";
 
 pragma solidity ^0.4.11;
@@ -30,8 +31,13 @@ contract DurationSecure {
     // Por ejemplo; Un supply mas pronto deberia tiene un probilidad mas alto.
     // Que vas a hacer con lo? Combina alto prob aqui con alto prob abajo? hmm.
 
-    function getNode(uint _nodeID, uint _timeStep) constant public returns(address, uint, uint, uint){
-        return (nodes[_nodeID].owner, nodes[_nodeID].numDemandHours, nodes[_nodeID].demandPrices[_timeStep], nodes[_nodeID].supplyHours[_timeStep]);
+    function getNode(uint _nodeID, uint timeStep, uint nodeFlag) constant public returns(address, uint, uint, uint){
+        if (nodeFlag == 0){ // Here, the node is a supply node
+            return (nodes[_nodeID].owner, nodes[_nodeID].numDemandHours, nodes[_nodeID].demandPrices[0], nodes[_nodeID].supplyHours[timeStep]);
+        }
+        else {
+            return (nodes[_nodeID].owner, nodes[_nodeID].numDemandHours, nodes[_nodeID].demandPrices[timeStep], nodes[_nodeID].supplyHours[0]);
+        }
     }
 
     function checkAndTransfer(uint[] sortedList, uint[] from, uint[] to, uint timeStep, address contractAddress) public returns(bool success) {
@@ -47,8 +53,13 @@ contract DurationSecure {
                 if (from[i] != nodes[sortedList[i]].nodeID || nodes[to[i]].supplyHours[timeStep] == 0) { return false; }
                 f.transferHouse(nodes[from[i]].owner, nodes[to[i]].owner, nodes[sortedList[sortedList.length - 1]].demandPrices[timeStep]);
             }
+<<<<<<< HEAD
         }S
         if (from[i] != nodes[sortedList[i]].nodeID || nodes[to[i]].supplyHours[timeStep] == 0) { return false; }
+=======
+        }
+        //if (from[i] != nodes[sortedList[i]].nodeID || nodes[to[i]].supplyHours[timeStep] == 0) { return false; }
+>>>>>>> 82693dd75746db0f01e09b37a0660bb8ec2b9cc2
         f.transferHouse(nodes[from[i]].owner, nodes[to[i]].owner, nodes[from[i]].demandPrices[timeStep]);
         //action for element when i => last element
     }

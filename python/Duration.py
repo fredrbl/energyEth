@@ -27,32 +27,54 @@ Duration = web3.eth.contract(address, abi = abi)
 
 def nodeSensitivity():
     # results is both marginal prices and total cost
-    nodes = range(4, 100, 10)
-    cost = [0 for n in range(0, 100)]
+    nodes = range(2, 10, 1)
+    cost = [0 for n in range(0, 10)]
+    t = 24
+    iterator = 0
+    margCost = [0 for t in range(0, 144)]
     for n in nodes:
     ## to open many accounts-> dont know. wait for response during your trip. Mientras ese, construir tu codigo
-        # primero=> solo duration.
-        # alternativo 2 => estimateGas() * n
-        # TEST: cost[n] = 50 + 2 * n
-        margCost[n] = cost[n] - cost[n - 1]
+        if(n % 2 == 0):
+            cost[n] = setSystemData(int(n/2), int(n/2), t) + cost[n]
+            owner, demandHours, supplyHours, demandPrices = getSystemData(n, t, iterator)
+            cost[n] = matching(owner, demandHours, supplyHours, demandPrices, t) + cost[n]
+            iterator = iterator + 1
+            if (n > 2):
+                margCost[n] = cost[n] - cost[n - 1]
+        else:
+            cost[n] = setSystemData(int((n + 1)/2), int((n - 1)/2), t) + cost[n]
+            owner, demandHours, supplyHours, demandPrices = getSystemData(n, t, iterator)
+            cost[n] = matching(owner, demandHours, supplyHours, demandPrices, t) + cost[n]
+            iterator = iterator + 1
+            if (n > 2):
+                margCost[n] = cost[n] - cost[n - 1]
+        print("node done")
+
     #### Plot la diferencia, y mostrar la marginal crecimiento.
-    node  = plt.figure(1)
     cost = np.asarray(cost)
-    x = np.arange(4, 100, 10)
+    margCost = np.asarray(margCost)
+    x = np.arange(2, 10, 1)
     yCost = cost[x]
     yMargCost = margCost[x]
-    plt.xticks(np.arange(x.min(), x.max(), 10))
-    plt.plot(x, yCost, yMargCost, '-o')
-    node.show()
-    ## quiza mostrarlo en dos plots..
+
+    costPlt  = plt.figure(1)
+    plt.xticks(np.arange(x.min(), x.max(), 1))
+    plt.plot(x, yCost, '-o')
+    costPlt.show()
+
+    margPlt = plt.figure(2)
+    plt.xticks(np.arange(x.min(), x.max(), 1))
+    plt.plot(x, yMargCost, '-o')
+    margPlt.show()
 
 def stepSensitivity(_numSupply, _numDemand):
     # results is both marginal prices and total cost
     # This is done with 10 nodes as standard
-    steps = range(24, 240, 15)
-    cost = [0 for t in range(0, 240)]
+    steps = range(24, 144, 24)
+    cost = [0 for t in range(0, 144)]
     numNodes = _numSupply + _numDemand
     iterator = 0
+    margCost = [0 for t in range(0, 144)]
     for t in steps:
     ## to open many accounts-> dont know. wait for response during your trip. Mientras ese, construir tu codigo
         cost[t] = setSystemData(_numSupply, _numDemand, t) + cost[t]
@@ -60,18 +82,25 @@ def stepSensitivity(_numSupply, _numDemand):
         cost[t] = matching(owner, demandHours, supplyHours, demandPrices, t) + cost[t]
         iterator = iterator + 1
         if (t > 24):
-            margCost[t] = cost[t] - cost[t - 15]
+            margCost[t] = cost[t] - cost[t - 24]
     #### Plot la diferencia, y mostrar la marginal crecimiento.
-    node  = plt.figure(1)
     cost = np.asarray(cost)
-    x = np.arange(24, 240, 15)
+    margCost = np.asarray(margCost)
+    x = np.arange(24, 144, 24)
     yCost = cost[x]
     yMargCost = margCost[x]
-    plt.xticks(np.arange(x.min(), x.max(), 15))
-    plt.plot(x, yCost, yMargCost, '-o')
-    node.show()
-    ## quiza mostrarlo en dos plots..
 
+    costPlt  = plt.figure(1)
+    plt.xticks(np.arange(x.min(), x.max(), 24))
+    plt.plot(x, yCost, '-o')
+    costPlt.show()
+
+    margPlt = plt.figure(2)
+    plt.xticks(np.arange(x.min(), x.max(), 24))
+    plt.plot(x, yMargCost, '-o')
+    margPlt.show()
+
+    ## quiza mostrarlo en dos plots..
 #### FUNCTIONS ####
 
 def setSystemData(_numSupply, _numDemand, _steps):
@@ -86,6 +115,7 @@ def setSystemData(_numSupply, _numDemand, _steps):
             total = total + tempBin # Total is the total supply we have to cover with demand
         tempCost = Duration.transact({'from': web3.eth.accounts[s]}).setNode(0, '', binary[s])
         cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
+    print(binary)
     ## 6 nodes with flexible demand
     # The lowest and highest price is arbitralery set to 150 and 600
     demandString = ['' for i in range(0, _numDemand)]
@@ -100,6 +130,8 @@ def setSystemData(_numSupply, _numDemand, _steps):
             demandString[d] = str(random.randint(150, 600)) + ',' + demandString[d]
         tempCost = Duration.transact({'from': web3.eth.accounts[d + s]}).setNode(demandHours[d], demandString[d], '')
         cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
+    print(demandString)
+    print(demandHours)
     return cost
 
 def getSystemData(_numNodes, _steps, iterator):
@@ -109,9 +141,15 @@ def getSystemData(_numNodes, _steps, iterator):
     endDemandPrices = [[999 for x in range(0, _steps)] for y in range(0, _numNodes)]
     endSupplyHours = [[0 for x in range(0, _steps)] for y in range(0, _numNodes)]
     for n in range(0, _numNodes):
-        owner[n], demandHours[n], demandPrices, supplyHours = Duration.call().getNode(n + (iterator * _numNodes))
+        lastNodeID = Duration.call().numNodes() - 1
+        firstNodeID = lastNodeID - _numNodes + 1
+        owner[n], demandHours[n], demandPrices, supplyHours = Duration.call().getNode(firstNodeID + n)
+        print("start")
+        print(demandPrices)
+        print(demandHours)
+        print(supplyHours)
+        print("end")
         i = 0 # i here is the iteratior that converts the strings to integers
-        print(len(supplyHours))
         for t in range(0, _steps):
             if(supplyHours == ''):
                 while (demandPrices[i] != ','):
@@ -124,6 +162,7 @@ def getSystemData(_numNodes, _steps, iterator):
     endDemandPrices = (np.array(endDemandPrices)).transpose()
     endSupplyHours = (np.array(endSupplyHours)).transpose()
     print("game")
+    print(endDemandPrices)
     return (owner, demandHours, endSupplyHours, endDemandPrices)
 
 def matching(owner, demandHours, supplyHours, demandPrices, steps):
@@ -147,5 +186,5 @@ def matching(owner, demandHours, supplyHours, demandPrices, steps):
                     demandPrices[t2][sortedList[t][i]] = 999
         if(len(sortedList[t]) > 0):
             tempCost = Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], copyDemandPrices[t], t, FlexCoin.address)
-        cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
+            cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
     return cost
