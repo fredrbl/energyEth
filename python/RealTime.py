@@ -13,7 +13,7 @@ import FlexCoin
 # Compile and deploy in populus in one terminal and testrpc-py in another
 # Open a new terminal and run this python script in python3
 web3 = Web3(HTTPProvider('http://localhost:8545'))
-jsonFile = open('/home/fred/Documents/FlexCoin_dir/build/contracts.json', 'r')
+jsonFile = open('/home/fred/Documents/energyEth/build/contracts.json', 'r')
 values = json.load(jsonFile)
 jsonFile.close()
 
@@ -70,19 +70,22 @@ def trade(price, battery, availableFlex, deviation):
     downAvailableFlex[1] = availableFlex[1] # This is used if system needs more consumption
     demand = [[] for y in range(2)]
     supply = [[] for y in range(2)]
-    tempCost = []
-    cost = 0
+    createNodeCost = []
+    updateCost = []
+    transferCost = []
+    nodeCost = 0
+    centralCost = 0
 
     # Some houses have flexibility, and no deviation. Other houses have deviation, but no flex. Lets do 50/50
     # This procedure is done by each house, so we might change this.
     for i in range(0,_numHouses):
-        tempCost.append(RealTime.transact().newRealTimeNode(web3.eth.accounts[i]))
+        createNodeCost.append(RealTime.transact().newRealTimeNode(web3.eth.accounts[i]))
         if (i % 2 == 0):
-            tempCost.append(RealTime.transact().setRealTimeNodePrice(i, upPrice[1][i], downPrice[1][i]))
-            tempCost.append(RealTime.transact().setRealTimeNodeBattery(i, upAvailableFlex[1][i], downAvailableFlex[1][i], 0))
+            updateCost.append(RealTime.transact().setRealTimeNodePrice(i, upPrice[1][i], downPrice[1][i]))
+            updateCost.append(RealTime.transact().setRealTimeNodeBattery(i, upAvailableFlex[1][i], downAvailableFlex[1][i], 0))
         else:
-            tempCost.append(RealTime.transact().setRealTimeNodePrice(i, 0, 0))
-            tempCost.append(RealTime.transact().setRealTimeNodeBattery(i, 0, 0, deviation[i]))
+            updateCost.append(RealTime.transact().setRealTimeNodePrice(i, 0, 0))
+            updateCost.append(RealTime.transact().setRealTimeNodeBattery(i, 0, 0, deviation[i]))
 
     for i in range(0,_numHouses):
         h = RealTime.call().getRealTimeNode(i)
@@ -172,16 +175,21 @@ def trade(price, battery, availableFlex, deviation):
     ### The calculation is done, and the transactions are performed in blockchain ##
     ################################################################################
 
-    tempCost.append(RealTime.transact().checkAndTransactList(firstFlexFlag, sortedPrice[0], sortedPrice[1], transactions[0], transactions[1], transactions[2], marketPrice, FlexCoin.address))
+    transferCost.append(RealTime.transact().checkAndTransactList(firstFlexFlag, sortedPrice[0], sortedPrice[1], transactions[0], transactions[1], transactions[2], marketPrice, FlexCoin.address))
     if (firstFlexFlag == 0):
         for i in range(numTransactionsFirstRound,len(transactions[0])):
             battery[transactions[1][i]] = battery[transactions[1][i]] - transactions[2][i]
     if (firstFlexFlag == 1):
         for i in range(numTransactionsFirstRound,len(transactions[0])):
             battery[transactions[0][i]] = battery[transactions[0][i]] + transactions[2][i]
-    for i in range(0, len(tempCost)):
-        cost = cost + web3.eth.getTransactionReceipt(tempCost[i]).gasUsed + cost
-    return(battery, marketPrice, cost)
+    for i in range(0, len(updateCost)):
+        nodeCost = web3.eth.getTransactionReceipt(updateCost[i]).gasUsed + nodeCost
+    for i in range(0, len(createNodeCost)):
+        nodeCost = web3.eth.getTransactionReceipt(createNodeCost[i]).gasUsed + nodeCost
+    for i in range(0, len(centralCost)):
+        centralCost = web3.eth.getTransactionReceipt(transferCost[i]).gasUsed + centralCost
+
+    return(battery, marketPrice, nodeCost, centralCost)
 
 ######## Now, we could test the system over a certain set of time steps
 def testRealTime():
@@ -231,7 +239,8 @@ def testRealTime():
                 battery[i][j] = round(int(0.9 * battery[i][j]))
             _, flexCoinBalance[i][j] = FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[j])
 
+    print(cost)
     #We must print the results!
     # The payment is amount of bid +/- transacted. What about the batteries and their deviation?
-    return flexCoinBalance, battery, price, deviation, marketPrice
-flexCoinBalance, battery, price, deviation, marketPrice = testRealTime()
+    return flexCoinBalance, battery, price, deviation, marketPrice, cost
+flexCoinBalance, battery, price, deviation, marketPrice, cost = testRealTime()
