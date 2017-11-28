@@ -185,6 +185,8 @@ def matching(owner, demandHours, supplyHours, demandPrices, steps):
                 for t2 in range(i, steps):
                     demandPrices[t2][sortedList[t][i]] = 999
         if(len(sortedList[t]) > 0):
+            print(sortedList)
+            print()
             tempCost = Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], copyDemandPrices[t], t, FlexCoin.address)
             cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
     return cost

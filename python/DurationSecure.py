@@ -33,7 +33,7 @@ def nodeSensitivity():
     iterator = 0
     margCost = [0 for t in range(0, 144)]
     for n in nodes:
-    ## to open many accounts-> dont know. wait for response during your trip. Mientras ese, construir tu codigo
+
         if(n % 2 == 0):
             cost[n] = setSystemData(int(n/2), int(n/2), t) + cost[n]
             owner, demandHours, supplyHours, demandPrices = getSystemData(n, t, iterator)
@@ -114,7 +114,6 @@ def setSystemData(_numSupply, _numDemand, _steps):
             total = total + binary[s][t] # Total is the total supply we have to cover with demand
         tempCost = Duration.transact({'from': web3.eth.accounts[s]}).setNode(0, [0], binary[s])
         cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
-    print(binary)
     ## 6 nodes with flexible demand
     # The lowest and highest price is arbitralery set to 150 and 600
     demandPrices = [[0 for x in range(0, _steps)] for y in range(0, _numDemand)]
@@ -156,7 +155,6 @@ def getSystemData(_numNodes, _steps, iterator):
 
     demandPrices = (np.array(demandPrices)).transpose()
     supplyHours = (np.array(supplyHours)).transpose()
-    print(demandPrices)
     return (owner, demandHours, supplyHours, demandPrices)
 
 def matching(owner, demandHours, supplyHours, demandPrices, steps):
@@ -166,23 +164,27 @@ def matching(owner, demandHours, supplyHours, demandPrices, steps):
     copyDemandPrices = copy.deepcopy(demandPrices.tolist())
     cost = 0
     tempCost = ''
+    numNodes = len(supplyHours[0])
+    lastNodeID = Duration.call().numNodes() - 1
+    firstNodeID = lastNodeID - numNodes + 1
     for t in range(0,steps):
         ## bueno. sort, y create a list of index equal to the list.
-        for i in range(0, np.sum(supplyHours[t])):
+        length = np.sum(supplyHours[t])
+        for i in range(0, length):
             sortedList[t].append(demandPrices[t].tolist().index(min(demandPrices[t])))
-            demandPrices[t][sortedList[t][i]] = 999 # because a node not can give more in one step
+            demandPrices[t][sortedList[t][i]] = 998 # because a node not can give more in one step
             addressFrom[t].append(sortedList[t][i])
             addressTo[t].append(supplyHours[t].tolist().index(1))
             supplyHours[t][supplyHours[t].tolist().index(1)] = 0
             demandHours[sortedList[t][i]] = demandHours[sortedList[t][i]] - 1
             if (demandHours[sortedList[t][i]] == 0): # The demand node is empty, and must be set to 999
                 for t2 in range(i, steps):
-                    demandPrices[t2][sortedList[t][i]] = 999
-        print(len(sortedList[t]))
-        if(len(sortedList[t]) > 0):
-            print(sortedList)
-            print(addressTo)
-            print(addressFrom)
+                    demandPrices[t2][sortedList[t][i]] = 998
+        if(length > 0):
+            for j in range(0, length):
+                addressTo[t][j] = firstNodeID + addressTo[t][j]
+                addressFrom[t][j] = firstNodeID + addressFrom[t][j]
+                sortedList[t][j] = firstNodeID + sortedList[t][j]
             tempCost = Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], t, FlexCoin.address)
             cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
     return cost
