@@ -21,6 +21,10 @@ abi = values['RealTime']['abi']
 address = input("What is the contract address? - RealTime: ")
 RealTime = web3.eth.contract(address, abi = abi)
 _numHouses = FlexCoin.FlexCoin.call().numHouses()
+createNodeCost = []
+
+for i in range(0,_numHouses):
+    createNodeCost.append(RealTime.transact().newRealTimeNode(web3.eth.accounts[i]))
 
 def setPrice(battery):
     # One battery have randomised price, the two others have a somewhat smart algorithm
@@ -70,7 +74,6 @@ def trade(price, battery, availableFlex, deviation):
     downAvailableFlex[1] = availableFlex[1] # This is used if system needs more consumption
     demand = [[] for y in range(2)]
     supply = [[] for y in range(2)]
-    createNodeCost = []
     updateCost = []
     transferCost = ''
     nodeCost = 0
@@ -79,7 +82,7 @@ def trade(price, battery, availableFlex, deviation):
     # Some houses have flexibility, and no deviation. Other houses have deviation, but no flex. Lets do 50/50
     # This procedure is done by each house, so we might change this.
     for i in range(0,_numHouses):
-        createNodeCost.append(RealTime.transact().newRealTimeNode(web3.eth.accounts[i]))
+
         if (i % 2 == 0):
             updateCost.append(RealTime.transact().setRealTimeNodePrice(i, upPrice[1][i], downPrice[1][i]))
             updateCost.append(RealTime.transact().setRealTimeNodeBattery(i, upAvailableFlex[1][i], downAvailableFlex[1][i], 0))

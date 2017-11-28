@@ -37,6 +37,8 @@ contract RealTime {
   }
   // costs 132707 gas
 
+// que hace? teien q hacer algo diferente
+
   function setRealTimeNodePrice(uint _houseID, uint _upPrice, uint _downPrice) public {
 
     //Could be activated if we only want to update your own house
@@ -107,7 +109,7 @@ contract RealTime {
       }
 
       if(demand < supply && (flexFlag != 0 || transactedAmount != supply)) { return 0; }
-      if (demand > supply && (flexFlag != 1 || transactedAmount != demand)) { return 0; }
+      if(demand > supply && (flexFlag != 1 || transactedAmount != demand)) { return 0; }
     //////////////////////////////////////////////////////////////////////////
     //////// 3. At last, we must check if the marketPrice is correct /////////
     //////////////////////////////////////////////////////////////////////////
@@ -141,6 +143,7 @@ contract RealTime {
       for (i; i < transactions1.length; i++) {
           transactedAmount = transactedAmount + transactions3[i];
       }
+      // POR QUE ES PROBLEM? NOPO.
       if (checkSortAndMatching(flexFlag, batteryList1, batteryList2, marketPrice, transactedAmount) == 1) {
           for (i = 0; i < transactions1.length; i++){
               f.transferHouse(houses[transactions1[i]].owner, houses[transactions2[i]].owner, transactions3[i] * marketPrice);

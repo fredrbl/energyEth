@@ -7,3 +7,7 @@
 3. How to calculate the price in each node? which mechanisms exists? - This is a big problem in this field
     a. Because only use a part of the grid, the taxes are scalable
 4. How to measure social welfare?
+
+
+ESTHER:
+1. Is the gas price for the testrpc the same as the testnet/livenet?
