@@ -70,17 +70,19 @@ def trade(price, battery, availableFlex, deviation):
     downAvailableFlex[1] = availableFlex[1] # This is used if system needs more consumption
     demand = [[] for y in range(2)]
     supply = [[] for y in range(2)]
+    tempCost = []
+    cost = 0
 
     # Some houses have flexibility, and no deviation. Other houses have deviation, but no flex. Lets do 50/50
     # This procedure is done by each house, so we might change this.
     for i in range(0,_numHouses):
-        RealTime.transact().newRealTimeNode(web3.eth.accounts[i])
+        tempCost.append(RealTime.transact().newRealTimeNode(web3.eth.accounts[i]))
         if (i % 2 == 0):
-            RealTime.transact().setRealTimeNodePrice(i, upPrice[1][i], downPrice[1][i])
-            RealTime.transact().setRealTimeNodeBattery(i, upAvailableFlex[1][i], downAvailableFlex[1][i], 0)
+            tempCost.append(RealTime.transact().setRealTimeNodePrice(i, upPrice[1][i], downPrice[1][i]))
+            tempCost.append(RealTime.transact().setRealTimeNodeBattery(i, upAvailableFlex[1][i], downAvailableFlex[1][i], 0))
         else:
-            RealTime.transact().setRealTimeNodePrice(i, 0, 0)
-            RealTime.transact().setRealTimeNodeBattery(i, 0, 0, deviation[i])
+            tempCost.append(RealTime.transact().setRealTimeNodePrice(i, 0, 0))
+            tempCost.append(RealTime.transact().setRealTimeNodeBattery(i, 0, 0, deviation[i]))
 
     for i in range(0,_numHouses):
         h = RealTime.call().getRealTimeNode(i)
@@ -170,14 +172,16 @@ def trade(price, battery, availableFlex, deviation):
     ### The calculation is done, and the transactions are performed in blockchain ##
     ################################################################################
 
-    RealTime.transact().checkAndTransactList(firstFlexFlag, sortedPrice[0], sortedPrice[1], transactions[0], transactions[1], transactions[2], marketPrice, FlexCoin.address)
+    tempCost.append(RealTime.transact().checkAndTransactList(firstFlexFlag, sortedPrice[0], sortedPrice[1], transactions[0], transactions[1], transactions[2], marketPrice, FlexCoin.address))
     if (firstFlexFlag == 0):
         for i in range(numTransactionsFirstRound,len(transactions[0])):
             battery[transactions[1][i]] = battery[transactions[1][i]] - transactions[2][i]
     if (firstFlexFlag == 1):
         for i in range(numTransactionsFirstRound,len(transactions[0])):
             battery[transactions[0][i]] = battery[transactions[0][i]] + transactions[2][i]
-    return(battery, marketPrice)
+    for i in range(0, len(tempCost)):
+        cost = cost + web3.eth.getTransactionReceipt(tempCost[i]).gasUsed + cost
+    return(battery, marketPrice, cost)
 
 ######## Now, we could test the system over a certain set of time steps
 def testRealTime():
@@ -185,7 +189,8 @@ def testRealTime():
     numPeriods = 20
     deviation = [[0 for x in range(_numHouses)] for y in range(numPeriods)]
     battery = [[0 for x in range(_numHouses)] for y in range(numPeriods)]
-    battery[0] = [6700, 0, 6700, 0, 6700, 0, 6700, 0, 6700, 0] #starting at 50 SOC. given we have 6 batteries
+    cost = [0 for i in range(numPeriods)]
+    battery[0] = [6700, 0, 6700, 0, 6700, 0, 6700, 0, 6700, 0] #starting at 50 SOC.s given we have 6 batteries
     batteryFlag = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0] # this batteryFlag tells what kind of battery that are used
     BattEff = 0.9 # Taken from Tesla Powerwall 2.0
     price = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [[492, 0, 509, 0, 541, 0, 577, 0, 537, 0], [441, 0, 386, 0, 419, 0, 444, 0, 378, 0]], [[558, 0, 520, 0, 588, 0, 504, 0, 518, 0], [456, 0, 395, 0, 388, 0, 436, 0, 350, 0]], [[491, 0, 499, 0, 570, 0, 503, 0, 568, 0], [440, 0, 405, 0, 370, 0, 383, 0, 407, 0]], [[537, 0, 589, 0, 584, 0, 551, 0, 536, 0], [388, 0, 423, 0, 356, 0, 358, 0, 430, 0]], [[483, 0, 540, 0, 564, 0, 560, 0, 518, 0], [394, 0, 396, 0, 373, 0, 363, 0, 385, 0]], [[497, 0, 531, 0, 536, 0, 588, 0, 529, 0], [407, 0, 452, 0, 381, 0, 444, 0, 422, 0]], [[566, 0, 499, 0, 512, 0, 501, 0, 551, 0], [380, 0, 367, 0, 393, 0, 424, 0, 398, 0]], [[556, 0, 538, 0, 543, 0, 483, 0, 524, 0], [381, 0, 370, 0, 398, 0, 460, 0, 419, 0]], [[581, 0, 484, 0, 559, 0, 481, 0, 516, 0], [427, 0, 381, 0, 436, 0, 455, 0, 389, 0]], [[584, 0, 503, 0, 504, 0, 530, 0, 583, 0], [382, 0, 377, 0, 409, 0, 415, 0, 408, 0]], [[484, 0, 583, 0, 534, 0, 513, 0, 557, 0], [418, 0, 393, 0, 416, 0, 389, 0, 356, 0]], [[590, 0, 538, 0, 536, 0, 568, 0, 540, 0], [402, 0, 428, 0, 379, 0, 459, 0, 385, 0]], [[483, 0, 489, 0, 532, 0, 482, 0, 575, 0], [447, 0, 407, 0, 455, 0, 380, 0, 427, 0]], [[511, 0, 567, 0, 537, 0, 564, 0, 561, 0], [379, 0, 358, 0, 375, 0, 419, 0, 422, 0]], [[500, 0, 516, 0, 521, 0, 499, 0, 517, 0], [352, 0, 426, 0, 414, 0, 420, 0, 430, 0]], [[528, 0, 500, 0, 516, 0, 544, 0, 489, 0], [356, 0, 362, 0, 460, 0, 441, 0, 400, 0]], [[485, 0, 561, 0, 532, 0, 511, 0, 552, 0], [450, 0, 450, 0, 435, 0, 395, 0, 381, 0]], [[481, 0, 543, 0, 547, 0, 500, 0, 545, 0], [403, 0, 399, 0, 427, 0, 352, 0, 388, 0]], [[518, 0, 588, 0, 588, 0, 480, 0, 563, 0], [380, 0, 354, 0, 428, 0, 372, 0, 434, 0]]]
@@ -219,7 +224,7 @@ def testRealTime():
         availableFlex = setFlexibility(battery[i], batteryFlag)
 
         ### The trading happens, and the batteries are corrected for the trading
-        battery[i], marketPrice[i] = trade(price[i], battery[i], availableFlex, deviation[i])
+        battery[i], marketPrice[i], cost[i] = trade(price[i], battery[i], availableFlex, deviation[i])
 
         for j in range(0,_numHouses):
             if (battery[i][j] > battery[i - 1][j]):

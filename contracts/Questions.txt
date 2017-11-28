@@ -1,0 +1,9 @@
+
+
+1. Do I need to connect my mechanisms to physical batteries? This action is done in the agents.
+2. One aspect could be; Yes, this p2p helps the system. How can I say this? I cannot show it?
+    a. Well; You could calculate utility of using the energy yourself, or selling it.
+    If the utility is higher of selling, then you are helping the system
+3. How to calculate the price in each node? which mechanisms exists? - This is a big problem in this field
+    a. Because only use a part of the grid, the taxes are scalable
+4. How to measure social welfare?

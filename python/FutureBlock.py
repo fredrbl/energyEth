@@ -13,18 +13,21 @@ jsonFile.close()
 abi = values['FutureBlock']['abi']
 address = input("What is the contract address? - FutureBlock: ")
 FutureBlock = web3.eth.contract(address, abi = abi)
-
+cost = 0
 
 ####### Isolate and test the mechanism ###########
 def testFutureBlock():
-    FutureBlock.transact({'from': web3.eth.accounts[0]}).newOffer(15, 180)
+    tempCost = []
+    tempCost.append(FutureBlock.transact({'from': web3.eth.accounts[0]}).newOffer(15, 180))
     a = FutureBlock.call().numOffers()
-    FutureBlock.transact({'from': web3.eth.accounts[1]}).setBid(a, 10, 40)
-    FutureBlock.transact({'from': web3.eth.accounts[2]}).setBid(a, 5, 50)
-    FutureBlock.transact({'from': web3.eth.accounts[3]}).setBid(a, 10, 30)
-    FutureBlock.transact({'from': web3.eth.accounts[0]}).setAcceptedPrice(a, 30)
-    FutureBlock.transact({'from': web3.eth.accounts[0]}).setAcceptedBids(a, 2)
-    FutureBlock.transact().transferAndClose(a, FlexCoin.address)
+    tempCost.append(FutureBlock.transact({'from': web3.eth.accounts[1]}).setBid(a, 10, 40))
+    tempCost.append(FutureBlock.transact({'from': web3.eth.accounts[2]}).setBid(a, 5, 50))
+    tempCost.append(FutureBlock.transact({'from': web3.eth.accounts[3]}).setBid(a, 10, 30))
+    tempCost.append(FutureBlock.transact({'from': web3.eth.accounts[0]}).setAcceptedPrice(a, 30))
+    tempCost.append(FutureBlock.transact({'from': web3.eth.accounts[0]}).setAcceptedBids(a, 2))
+    tempCost.append(FutureBlock.transact().transferAndClose(a, FlexCoin.address))
+    for i in range(0,len(tempCost)):
+        cost = cost + web3.eth.getTransactionReceipt(tempCost[i]).gasUsed + cost
 
     print(FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[0]))
     print(FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[3]))
