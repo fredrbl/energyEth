@@ -143,20 +143,10 @@ contract RealTime {
       for (i; i < transactions1.length; i++) {
           transactedAmount = transactedAmount + transactions3[i];
       }
-      // POR QUE ES PROBLEM? NOPO.
+
       if (checkSortAndMatching(flexFlag, batteryList1, batteryList2, marketPrice, transactedAmount) == 1) {
           for (i = 0; i < transactions1.length; i++){
               f.transferHouse(houses[transactions1[i]].owner, houses[transactions2[i]].owner, transactions3[i] * marketPrice);
-              //require(houses[transactions1[i]].flexCoinBalance >= transactions3[i] * marketPrice);           // Check if the sender has enough
-              //require(houses[transactions2[i]].flexCoinBalance + transactions3[i] * marketPrice >= houses[transactions2[i]].flexCoinBalance); // Check for overflows
-              //houses[transactions1[i]].flexCoinBalance -= transactions3[i] * marketPrice;                    // Subtract from the sender
-              //houses[transactions2[i]].flexCoinBalance += transactions3[i] * marketPrice;                           // Add the same to the recipient
-              //Transfer(transactions1[i], transactions2[i], transactions3[i] * marketPrice);
-
-              // Now, we must change energy ownership. In this way, the "problem" is transferred to the other party.
-              // We measure the penalties from the different deviations.
-              //houses[transactions1[i]].deviation = houses[transactions1[i]].deviation - int(transactions3[i]);
-              //houses[transactions2[i]].deviation = houses[transactions2[i]].deviation + int(transactions3[i]);
           }
           return true;
       }
