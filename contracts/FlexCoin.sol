@@ -23,7 +23,7 @@ contract FlexCoin {
         numHouses = numHouses + 1;
         House h = houses[msg.sender];
         h.smartMeter = msg.sender; // This must be set when implementing system, and have no function here. Solely an example, and msg.sender is not correct.
-        h.flexCoinBalance = 200000000;
+        h.flexCoinBalance = 200000000000;
     }
     // gas cost: 37 041
 
