@@ -273,19 +273,19 @@ def testRealTime(numHouses, numPeriods):
     return flexCoinBalance, battery, price, deviation, marketPrice, averageNode, averageCentral
 
 counter = 0
-for i in range(99,100):
+for i in range(55,56):
     flexCoinBalance, battery, price, deviation, marketPrice, averageNode[i], averageCentral[i] = testRealTime(i, 1)
     averageCentral[i] = averageCentral[i] - counter*8770*0
     counter = counter + 1
 node = averageNode
 central = averageCentral
-
-centralPlot = plt.figure(1)
-central = np.asarray(central)
-x = np.arange(98, 101, 1)
-y = central[x]
-plt.xticks(np.arange(x.min(), x.max(), 1))
-plt.xlabel("Time step")
-plt.ylabel("Central Cost")
-plt.plot(x, y, 'o-')
-centralPlot.show()
+#
+#centralPlot = plt.figure(1)
+#central = np.asarray(central)
+#x = np.arange(98, 101, 1)
+#y = central[x]
+#plt.xticks(np.arange(x.min(), x.max(), 1))
+#plt.xlabel("Time step")
+#plt.ylabel("Central Cost")
+#plt.plot(x, y, 'o-')
+#centralPlot.show()

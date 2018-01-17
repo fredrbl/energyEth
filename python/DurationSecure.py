@@ -233,4 +233,4 @@ def matching(owner, demandHours, supplyHours, demandPrices, steps):
             cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
     return cost
 
-centralCost, demandCost, supplyCost = stepSensitivity(10, 24, 145)
+centralCost, demandCost, supplyCost = nodeSensitivity(99, 101, 24)

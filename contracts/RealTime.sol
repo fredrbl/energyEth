@@ -35,7 +35,7 @@ contract RealTime {
       h.upAvailableFlex = 0;
       h.downAvailableFlex = 0;
   }
-  // costs 132707 gas
+  // costs 132 707 gas
 
 // que hace? teien q hacer algo diferente
 
@@ -48,7 +48,7 @@ contract RealTime {
           h.downPrice = _downPrice;
     // }
   }
-  // costs 32193 gas
+  // costs 32 193 gas
 
   function setRealTimeNodeBattery(uint _houseID, uint _upAvailableFlex, uint _downAvailableFlex, int _deviation) public {
       // This function could be connected through the smart meter in the battery, and hence not possible to change for the users. This could be implemented thorugh a if sentence, as shown below
@@ -58,12 +58,12 @@ contract RealTime {
       h.downAvailableFlex = _downAvailableFlex;
       h.deviation = _deviation;
   }
-  // costs 82717 gas
+  // costs 82 717 gas
 
   function getRealTimeNode(uint _houseID) public constant returns (address, uint, uint, uint, uint, int) {
       return (houses[_houseID].owner, houses[_houseID].upPrice, houses[_houseID].downPrice, houses[_houseID].upAvailableFlex, houses[_houseID].downAvailableFlex, houses[_houseID].deviation);
   }
-  // costs 23610 gas
+  // costs 23 610 gas
 
   function checkSortAndMatching(uint flexFlag, uint[] batteryList1, uint[] batteryList2, uint marketPrice, uint transactedAmount) constant public returns(uint success){
     // This function will check the flexFlag, the transactions and the sorting algorithm. It will not store anything in the blockchain.
@@ -134,7 +134,7 @@ contract RealTime {
 
       return 1;
   }
-  // costs 43841 gas
+  // costs 43 841 gas
 
   function checkAndTransactList(uint flexFlag, uint[] batteryList1, uint[] batteryList2, uint[] transactions1, uint[] transactions2, uint[] transactions3, uint marketPrice, address contractAddress) public returns(bool success){
       uint transactedAmount = 0;
@@ -154,5 +154,5 @@ contract RealTime {
           return false;
       }
   }
-    // costs 43849 gas
+    // costs 43 849 gas
 }
