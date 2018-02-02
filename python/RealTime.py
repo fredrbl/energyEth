@@ -22,8 +22,14 @@ address = input("What is the contract address? - RealTime: ")
 RealTime = web3.eth.contract(address, abi = abi)
 #numHouses = FlexCoin.FlexCoin.call().numHouses()
 createNodeCost = []
-averageNode = [0 for i in range(0,100)]
-averageCentral = [0 for i in range(0,100)]
+
+testRange = range(600, 601, 1)
+
+averageNode = [0 for i in testRange]
+averageCentral = [0 for i in testRange]
+numTxCentral = [0 for i in testRange]
+numTxNodes = [0 for i in testRange]
+numTxInitiate = [0 for i in testRange]
 
 def setPrice(battery):
     # One battery have randomised price, the two others have a somewhat smart algorithm
@@ -55,7 +61,7 @@ def setFlexibility(battery, batteryFlag, numHouses):
             availableFlex[1][i] = 0
     return availableFlex
 
-def trade(price, battery, availableFlex, deviation, numHouses):
+def trade(numTxCentral, numTxNodes, numTxInitiate, price, battery, availableFlex, deviation, numHouses):
     wholesalePrice = 470 # 10cent/kWh
     flexFlag = -1
     transactions = [[] for y in range(3)]
@@ -85,9 +91,11 @@ def trade(price, battery, availableFlex, deviation, numHouses):
         if (i % 2 == 0):
             updateCost.append(RealTime.transact().setRealTimeNodePrice(i, upPrice[1][i], downPrice[1][i]))
             updateCost.append(RealTime.transact().setRealTimeNodeBattery(i, upAvailableFlex[1][i], downAvailableFlex[1][i], 0))
+            numTxNodes = numTxNodes + 2
         else:
             updateCost.append(RealTime.transact().setRealTimeNodePrice(i, 0, 0))
             updateCost.append(RealTime.transact().setRealTimeNodeBattery(i, 0, 0, deviation[i]))
+            numTxNodes = numTxNodes + 2
 
     for i in range(0,numHouses):
         h = RealTime.call().getRealTimeNode(i)
@@ -176,6 +184,8 @@ def trade(price, battery, availableFlex, deviation, numHouses):
     ################################################################################
     ### The calculation is done, and the transactions are performed in blockchain ##
     ################################################################################
+    numTxCentral = len(transactions[0])
+    print(len(transactions[0]), len(transactions[1]), len(transactions[2]))
     transferCost = RealTime.transact().checkAndTransactList(firstFlexFlag, sortedPrice[0], sortedPrice[1], transactions[0], transactions[1], transactions[2], marketPrice, FlexCoin.address)
     centralCost = web3.eth.getTransactionReceipt(transferCost).gasUsed
 
@@ -187,10 +197,10 @@ def trade(price, battery, availableFlex, deviation, numHouses):
             battery[transactions[0][i]] = battery[transactions[0][i]] + transactions[2][i]
     for i in range(0, len(updateCost)):
         nodeCost = web3.eth.getTransactionReceipt(updateCost[i]).gasUsed + nodeCost
-    for i in range(0, len(createNodeCost)):
-        nodeCost = web3.eth.getTransactionReceipt(createNodeCost[i]).gasUsed + nodeCost
+    #for i in range(0, len(createNodeCost)):
+    #    nodeCost = web3.eth.getTransactionReceipt(createNodeCost[i]).gasUsed + nodeCost
 
-    return(battery, marketPrice, nodeCost, centralCost)
+    return(numTxCentral, numTxNodes, numTxInitiate, battery, marketPrice, nodeCost, centralCost)
 
 ######## Now, we could test the system over a certain set of time steps
 def testRealTime(numHouses, numPeriods):
@@ -198,11 +208,16 @@ def testRealTime(numHouses, numPeriods):
     while (FlexCoin.FlexCoin.call().numHouses() < numHouses):
         web3.personal.newAccount('pass')
         web3.personal.unlockAccount(web3.eth.accounts[FlexCoin.FlexCoin.call().numHouses()], 'pass')
-        web3.eth.sendTransaction({'to': web3.eth.accounts[FlexCoin.FlexCoin.call().numHouses()], 'from': web3.eth.coinbase, 'value': 12345})
+        web3.eth.sendTransaction({'to': web3.eth.accounts[FlexCoin.FlexCoin.call().numHouses()], 'from': web3.eth.coinbase, 'value': 123456789})
         FlexCoin.FlexCoin.transact().newHouse() # {'from': web3.eth.accounts[FlexCoin.FlexCoin.call().numHouses()]}
+
+    numTxCentral = 0
+    numTxNodes = 0
+    numTxInitiate = 0
 
     for i in range(0,numHouses):
         createNodeCost.append(RealTime.transact().newRealTimeNode(web3.eth.accounts[i]))
+        numTxInitiate = numTxInitiate + 1
 
     deviation = [[0 for x in range(numHouses)] for y in range(numPeriods)]
     battery = [[0 for x in range(numHouses)] for y in range(numPeriods)]
@@ -210,6 +225,7 @@ def testRealTime(numHouses, numPeriods):
     price = [[[0 for z in range(numHouses)] for x in range(0, 2)] for y in range(numPeriods)]
     nodeCost = [0 for i in range(numPeriods)]
     centralCost = [0 for i in range(numPeriods)]
+
 
     oldBattery = [6700, 0, 6700, 0, 6700, 0, 6700, 0, 6700, 0] #starting at 50 SOC.s given we have 6 batteries
     oldBatteryFlag = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0] # this batteryFlag tells what kind of battery that are used
@@ -259,7 +275,7 @@ def testRealTime(numHouses, numPeriods):
         availableFlex = setFlexibility(battery[i], batteryFlag, numHouses)
 
         ### The trading happens, and the batteries are corrected for the trading
-        battery[i], marketPrice[i], nodeCost[i], centralCost[i] = trade(price[i], battery[i], availableFlex, deviation[i], numHouses)
+        numTxCentral, numTxNodes, numTxInitiate, battery[i], marketPrice[i], nodeCost[i], centralCost[i] = trade(numTxCentral, numTxNodes, numTxInitiate, price[i], battery[i], availableFlex, deviation[i], numHouses)
         for j in range(0,numHouses):
             if (battery[i][j] > battery[i - 1][j]):
                 battery[i][j] = round(int(0.9 * battery[i][j]))
@@ -268,17 +284,20 @@ def testRealTime(numHouses, numPeriods):
     #We must print the results!
     # The payment is amount of bid +/- transacted. What about the batteries and their deviation?
 
-    averageNode = (sum(nodeCost)/numPeriods)/numHouses
+    averageNode = (sum(nodeCost)/numPeriods)
     averageCentral = sum(centralCost)/numPeriods
-    return flexCoinBalance, battery, price, deviation, marketPrice, averageNode, averageCentral
+    return numTxCentral, numTxNodes, numTxInitiate, flexCoinBalance, battery, price, deviation, marketPrice, averageNode, averageCentral
 
 counter = 0
-for i in range(55,56):
-    flexCoinBalance, battery, price, deviation, marketPrice, averageNode[i], averageCentral[i] = testRealTime(i, 1)
-    averageCentral[i] = averageCentral[i] - counter*8770*0
+node = [0 for i in testRange]
+total = [0 for i in testRange]
+for i in testRange:
+    numTxCentral[counter], numTxNodes[counter], numTxInitiate[counter], flexCoinBalance, battery, price, deviation, marketPrice, averageNode[counter], averageCentral[counter] = testRealTime(i, 1)
+    averageCentral[counter] = averageCentral[counter] - counter*8770*0
+    node[counter] = averageNode[counter] - 78000
+    total[counter] = node[counter] + averageCentral[counter]
     counter = counter + 1
-node = averageNode
-central = averageCentral
+
 #
 #centralPlot = plt.figure(1)
 #central = np.asarray(central)

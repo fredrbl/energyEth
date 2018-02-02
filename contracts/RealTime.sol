@@ -131,7 +131,6 @@ contract RealTime {
           }
           if (marketPrice != batteryList2[i - 1]) { return 0; }
       }
-
       return 1;
   }
   // costs 43 841 gas

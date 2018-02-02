@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 
 ############### ASSUMPTIONS ###############
 # This is a very simplified method. The following assumptions hold;
-# - The loads must be available at all times (i.e a price between 1 -> 998)
 # - The energy for one hour is always 1 kwh, both for supply and demand
 # - The energy is always divided in one hour.
 # - Each node is either a demand or supply node. A node cannot be both
