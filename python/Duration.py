@@ -35,16 +35,17 @@ def nodeSensitivity(start, stop, steps):
 
     for i in range(0, stop):
         flag = 0
-        if(len(web3.eth.accounts) < i):
+        if(len(web3.eth.accounts) <= i):
             web3.personal.newAccount('pass')
             web3.personal.unlockAccount(web3.eth.accounts[i], 'pass')
             flag = 1
 
-        if(web3.eth.getBalance(web3.eth.accounts[i]) < 1234567891011):
-            web3.eth.sendTransaction({'to': web3.eth.accounts[i], 'from': web3.eth.coinbase, 'value': 1234567891011})
+        if(web3.eth.getBalance(web3.eth.accounts[i]) < 99999999999):
+            web3.eth.sendTransaction({'to': web3.eth.accounts[i], 'from': web3.eth.coinbase, 'value': 9999999999999999})
 
         if(flag == 1):
             FlexCoin.FlexCoin.transact({'from': web3.eth.accounts[i]}).newHouse()
+        print(FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[i]))
 
     for n in nodes:
         if(n % 2 == 0):
@@ -52,33 +53,33 @@ def nodeSensitivity(start, stop, steps):
             owner, demandHours, supplyHours, demandPrices = getSystemData(n, steps, iterator)
             centralCost[n] = matching(owner, demandHours, supplyHours, demandPrices, steps)
             iterator = iterator + 1
-            if (n > 2):
-                margCost[n] = centralCost[n] - centralCost[n - 1]
+            #if (n > 2):
+                #margCost[n] = centralCost[n] - centralCost[n - 1]
         else:
             demandCost[n], supplyCost[n] = setSystemData(int((n + 1)/2), int((n - 1)/2), steps)
             owner, demandHours, supplyHours, demandPrices = getSystemData(n, steps, iterator)
             centralCost[n] = matching(owner, demandHours, supplyHours, demandPrices, steps)
             iterator = iterator + 1
-            if (n > 2):
-                margCost[n] = centralCost[n] - centralCost[n - 1]
+            #if (n > 2):
+                #margCost[n] = centralCost[n] - centralCost[n - 1]
         print("node done")
 
     #### Plot la diferencia, y mostrar la marginal crecimiento.
-    centralCost = np.asarray(centralCost)
-    margCost = np.asarray(margCost)
-    x = np.arange(start, stop, 1)
-    yCost = centralCost[x]
-    yMargCost = margCost[x]
+    #centralCost = np.asarray(centralCost)
+    #margCost = np.asarray(margCost)
+    #x = np.arange(start, stop, 1)
+    #yCost = centralCost[x]
+    #yMargCost = margCost[x]
 
-    costPlt  = plt.figure(1)
-    plt.xticks(np.arange(x.min(), x.max(), 1))
-    plt.plot(x, yCost, '-o')
-    costPlt.show()
+    #costPlt  = plt.figure(1)
+    #plt.xticks(np.arange(x.min(), x.max(), 1))
+    #plt.plot(x, yCost, '-o')
+    #costPlt.show()
 
-    margPlt = plt.figure(2)
-    plt.xticks(np.arange(x.min(), x.max(), 1))
-    plt.plot(x, yMargCost, '-o')
-    margPlt.show()
+    #margPlt = plt.figure(2)
+    #plt.xticks(np.arange(x.min(), x.max(), 1))
+    #plt.plot(x, yMargCost, '-o')
+    #margPlt.show()
 
     return centralCost, demandCost, supplyCost
 
@@ -138,6 +139,9 @@ def setSystemData(_numSupply, _numDemand, _steps):
             tempBin = random.randint(0, 1)
             binary[s] = str(tempBin)+ binary[s]
             total = total + tempBin # Total is the total supply we have to cover with demand
+        if(web3.eth.getBalance(web3.eth.accounts[s]) < 99999999999):
+            web3.personal.unlockAccount(web3.eth.accounts[s], 'pass')
+            web3.eth.sendTransaction({'to': web3.eth.accounts[s], 'from': web3.eth.coinbase, 'value': 999999999999})
         tempCost = Duration.transact({'from': web3.eth.accounts[s]}).setNode(0, '', binary[s])
         supplyCost = web3.eth.getTransactionReceipt(tempCost).gasUsed + supplyCost
     ## 6 nodes with flexible demand
@@ -153,7 +157,9 @@ def setSystemData(_numSupply, _numDemand, _steps):
     for d in range(0, _numDemand):
         for t in range(0, _steps):
             demandString[d] = str(random.randint(150, 600)) + ',' + demandString[d]
-        web3.personal.unlockAccount(web3.eth.accounts[(d + 1) + s], 'pass')
+        if(web3.eth.getBalance(web3.eth.accounts[(d + 1) + s]) < 99999999999):
+            web3.personal.unlockAccount(web3.eth.accounts[(d + 1) + s], 'pass')
+            web3.eth.sendTransaction({'to': web3.eth.accounts[(d + 1) + s], 'from': web3.eth.coinbase, 'value': 999999999999})
         tempCost = Duration.transact({'from': web3.eth.accounts[(d + 1) + s]}).setNode(demandHours[d], demandString[d], '')
         demandCost = web3.eth.getTransactionReceipt(tempCost).gasUsed + demandCost
     return demandCost, supplyCost
@@ -202,9 +208,12 @@ def matching(owner, demandHours, supplyHours, demandPrices, steps):
                 for t2 in range(i, steps):
                     demandPrices[t2][sortedList[t][i]] = 999
         if(len(sortedList[t]) > 0):
+            for a in range(0, (len(web3.eth.accounts) - 1)):
+                add, bal = FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[a])
+                if bal == 0:
+                    FlexCoin.FlexCoin.transact({'from': web3.eth.accounts[a]}).newHouse()
             tempCost = Duration.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], copyDemandPrices[t], t, FlexCoin.address)
             cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
     return cost
 
-
-centralCost, demandCost, supplyCost = stepSensitivity(20,24,288)
+centralCost, demandCost, supplyCost = nodeSensitivity(599,600,24)

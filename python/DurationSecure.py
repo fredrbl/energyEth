@@ -45,40 +45,39 @@ def nodeSensitivity(start, stop, steps):
         if(web3.eth.getBalance(web3.eth.accounts[i]) < 123456789101112131415):
             web3.eth.sendTransaction({'to': web3.eth.accounts[i], 'from': web3.eth.coinbase, 'value': 123456789101112131415})
         add, tot = FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[i])
-    input('pause')
     for n in nodes:
         if(n % 2 == 0):
             demandCost[n], supplyCost[n] = setSystemData(int(n/2), int(n/2), steps)
             owner, demandHours, supplyHours, demandPrices = getSystemData(n, steps, iterator)
             centralCost[n] = matching(owner, demandHours, supplyHours, demandPrices, steps)
             iterator = iterator + 1
-            if (n > 2):
-                margCost[n] = centralCost[n] - centralCost[n - 1]
+            #if (n > 2):
+            #    margCost[n] = centralCost[n] - centralCost[n - 1]
         else:
             demandCost[n], supplyCost[n] = setSystemData(int((n + 1)/2), int((n - 1)/2), steps)
             owner, demandHours, supplyHours, demandPrices = getSystemData(n, steps, iterator)
             centralCost[n] = matching(owner, demandHours, supplyHours, demandPrices, steps)
             iterator = iterator + 1
-            if (n > 2):
-                margCost[n] = centralCost[n] - centralCost[n - 1]
+            #if (n > 2):
+            #    margCost[n] = centralCost[n] - centralCost[n - 1]
         print("node done")
 
     #### Plot la diferencia, y mostrar la marginal crecimiento.
-    centralCost = np.asarray(centralCost)
-    margCost = np.asarray(margCost)
-    x = np.arange(start, stop, 1)
-    yCost = centralCost[x]
-    yMargCost = margCost[x]
+    #centralCost = np.asarray(centralCost)
+    #margCost = np.asarray(margCost)
+    #x = np.arange(start, stop, 1)
+    #yCost = centralCost[x]
+    #yMargCost = margCost[x]
 
-    costPlt  = plt.figure(1)
-    plt.xticks(np.arange(x.min(), x.max(), 1))
-    plt.plot(x, yCost, '-o')
-    costPlt.show()
+    #costPlt  = plt.figure(1)
+    #plt.xticks(np.arange(x.min(), x.max(), 1))
+    #plt.plot(x, yCost, '-o')
+    #costPlt.show()
 
-    margPlt = plt.figure(2)
-    plt.xticks(np.arange(x.min(), x.max(), 1))
-    plt.plot(x, yMargCost, '-o')
-    margPlt.show()
+    #margPlt = plt.figure(2)
+    #plt.xticks(np.arange(x.min(), x.max(), 1))
+    #plt.plot(x, yMargCost, '-o')
+    #margPlt.show()
 
     return centralCost, demandCost, supplyCost
 
@@ -138,8 +137,9 @@ def setSystemData(_numSupply, _numDemand, _steps):
         for t in range(0,_steps):
             binary[s][t] = random.randint(0, 1)
             total = total + binary[s][t] # Total is the total supply we have to cover with demand
-        if(web3.eth.getBalance(web3.eth.accounts[s]) < 123456789101112131415):
-            web3.eth.sendTransaction({'to': web3.eth.accounts[s], 'from': web3.eth.coinbase, 'value': 123456789101112131415})
+        if(web3.eth.getBalance(web3.eth.accounts[s]) < 99999999999):
+            web3.personal.unlockAccount(web3.eth.accounts[s], 'pass')
+            web3.eth.sendTransaction({'to': web3.eth.accounts[s], 'from': web3.eth.coinbase, 'value': 999999999999})
         tempCost = DurationSecure.transact({'from': web3.eth.accounts[s]}).setNode(0, [0], binary[s])
         totTransactions = totTransactions + 1
         supplyCost = web3.eth.getTransactionReceipt(tempCost).gasUsed + supplyCost
@@ -157,11 +157,9 @@ def setSystemData(_numSupply, _numDemand, _steps):
         for t in range(0, _steps):
             demandPrices[d][t] = random.randint(150, 600)
         web3.personal.unlockAccount(web3.eth.accounts[(d + 1) + s], 'pass')
-        if(web3.eth.getBalance(web3.eth.accounts[d + 1 + s]) < 123456789101112131415):
-            web3.eth.sendTransaction({'to': web3.eth.accounts[d+1+s], 'from': web3.eth.coinbase, 'value': 123456789101112131415})
-        print(d + 1 + s)
-        print(demandHours[d])
-        print(demandPrices[d])
+        if(web3.eth.getBalance(web3.eth.accounts[(d + 1) + s]) < 99999999999):
+            web3.personal.unlockAccount(web3.eth.accounts[(d + 1) + s], 'pass')
+            web3.eth.sendTransaction({'to': web3.eth.accounts[(d + 1) + s], 'from': web3.eth.coinbase, 'value': 999999999999})
         tempCost = DurationSecure.transact({'from': web3.eth.accounts[(d + 1) + s]}).setNode(demandHours[d], demandPrices[d], [0])
         totTransactions = totTransactions + 1
         demandCost = web3.eth.getTransactionReceipt(tempCost).gasUsed + demandCost
@@ -219,17 +217,21 @@ def matching(owner, demandHours, supplyHours, demandPrices, steps):
                     demandPrices[t2][sortedList[t][i]] = 998
 
         if(length > 0):
-            for j in range(0, length):
-                addressTo[t][j] = firstNodeID + addressTo[t][j]
-                addressFrom[t][j] = firstNodeID + addressFrom[t][j]
-                sortedList[t][j] = firstNodeID + sortedList[t][j]
-                address1, _, dmp1, _ = DurationSecure.call().getNode(addressTo[t][j], t, 0)
-                address2, _, dmp2, _ = DurationSecure.call().getNode(addressFrom[t][j], t, 1)
-                FlexCoin.FlexCoin.transact({'from': address1}).newHouse()
-                FlexCoin.FlexCoin.transact({'from': address2}).newHouse()
+            #for j in range(0, length):
+            #    addressTo[t][j] = firstNodeID + addressTo[t][j]
+            #    addressFrom[t][j] = firstNodeID + addressFrom[t][j]
+            #    sortedList[t][j] = firstNodeID + sortedList[t][j]
+            #    address1, _, dmp1, _ = DurationSecure.call().getNode(addressTo[t][j], t, 0)
+            #    address2, _, dmp2, _ = DurationSecure.call().getNode(addressFrom[t][j], t, 1)
+            #    FlexCoin.FlexCoin.transact({'from': address1}).newHouse()
+            #    FlexCoin.FlexCoin.transact({'from': address2}).newHouse()
+            for a in range(0, (len(web3.eth.accounts) - 1)):
+                add, bal = FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[a])
+                if bal == 0:
+                    FlexCoin.FlexCoin.transact({'from': web3.eth.accounts[a]}).newHouse()
             tempCost = DurationSecure.transact().checkAndTransfer(sortedList[t], addressFrom[t], addressTo[t], t, FlexCoin.address)
             totTransactions = totTransactions + 1
             cost = web3.eth.getTransactionReceipt(tempCost).gasUsed + cost
     return cost
 
-centralCost, demandCost, supplyCost = nodeSensitivity(99, 101, 24)
+centralCost, demandCost, supplyCost = nodeSensitivity(599, 600, 24)
