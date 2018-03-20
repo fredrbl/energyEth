@@ -20,9 +20,10 @@ jsonFile.close()
 abi = values['RealTime']['abi']
 address = input("What is the contract address? - RealTime: ")
 RealTime = web3.eth.contract(address, abi = abi)
-#numHouses = FlexCoin.FlexCoin.call().numHouses()
+
 createNodeCost = []
 
+# Set how many nodes that should be simulated
 testRange = range(600, 601, 1)
 
 averageNode = [0 for i in testRange]
@@ -32,21 +33,25 @@ numTxNodes = [0 for i in testRange]
 numTxInitiate = [0 for i in testRange]
 
 def setPrice(battery):
-    # One battery have randomised price, the two others have a somewhat smart algorithm
+# This function sets a price for the battery energy - i.e agent market decisions
+
     price = [[0 for x in range(numHouses)] for y in range(2)]
     #price[0][0] = random.randint(480, 590)
     #price[1][0] = random.randint(350, 460)
 
-    for i in range(0, 10, 2): # could show graph over the logic of the pricing
+    # The price is set under 470 if the battery buys energy, and above 470 if the battery sells energy.
+    for i in range(0, 10, 2):
         if (battery[i] <= 6700):
-            price[0][i] = random.randint(480, 590) #int(round(480 + battery[i] * 0.0164))
-            price[1][i] = random.randint(350, 460) #int(round(460 - battery[i] * 0.0164))
+            price[0][i] = random.randint(480, 590)
+            price[1][i] = random.randint(350, 460)
         else:
-            price[0][i] = random.randint(480, 590) #int(round(700 - battery[i] * 0.0164))
-            price[1][i] = random.randint(350, 460) #int(round(240 + battery[i] * 0.0164))
+            price[0][i] = random.randint(480, 590)
+            price[1][i] = random.randint(350, 460)
     return price
 
 def setFlexibility(battery, batteryFlag, numHouses):
+# Setting the different battery levels
+
     # 5000 w in one hour = 5000 wh => 833 w max in 10 minutes
     availableFlex = [[0 for x in range(numHouses)] for y in range(2)]
     for i in range(0,numHouses):
@@ -62,7 +67,9 @@ def setFlexibility(battery, batteryFlag, numHouses):
     return availableFlex
 
 def trade(numTxCentral, numTxNodes, numTxInitiate, price, battery, availableFlex, deviation, numHouses):
-    wholesalePrice = 470 # 10cent/kWh
+# This is the main function that does the trading.
+
+    wholesalePrice = 470
     flexFlag = -1
     transactions = [[] for y in range(3)]
     upPrice = [[0 for x in range(numHouses)] for y in range(2)]
@@ -85,7 +92,7 @@ def trade(numTxCentral, numTxNodes, numTxInitiate, price, battery, availableFlex
     centralCost = 0
 
     # Some houses have flexibility, and no deviation. Other houses have deviation, but no flex. Lets do 50/50
-    # This procedure is done by each house, so we might change this.
+    # The for loop under is information gathering to the blockchain
     for i in range(0,numHouses):
 
         if (i % 2 == 0):
@@ -97,17 +104,9 @@ def trade(numTxCentral, numTxNodes, numTxInitiate, price, battery, availableFlex
             updateCost.append(RealTime.transact().setRealTimeNodeBattery(i, 0, 0, deviation[i]))
             numTxNodes = numTxNodes + 2
 
+    # The for loop below is the central node fetching all information from the blockchain
     for i in range(0,numHouses):
         h = RealTime.call().getRealTimeNode(i)
-        # Up means that the battery must sell energy -> upPrice > wholesalePrice
-    #        upPrice[0].append(i)
-    #        upPrice[1].append(h[0])
-    #        downPrice[0].append(i)
-    #        downPrice[1].append(h[1])
-    #        upAvailableFlex[0].append(i)
-    #        upAvailableFlex[1].append(h[2])
-    #        downAvailableFlex[0].append(i)
-    #        downAvailableFlex[1].append(h[3])
         if (h[5] < 0):
             demand[0].append(i)
             demand[1].append(-h[5])
@@ -115,14 +114,11 @@ def trade(numTxCentral, numTxNodes, numTxInitiate, price, battery, availableFlex
             supply[0].append(i)
             supply[1].append(h[5])
 
-    ################################################################################
-    ######## Here the initialisation should end, and other functions take over #####
-    ################################################################################
-
+    # Here, the match.py script is used to match supply and demand
     flexFlag, transactions, restEnergy = match.matching(flexFlag, transactions, demand, supply)
 
-    numTransactionsFirstRound = len(transactions[0])
 
+    numTransactionsFirstRound = len(transactions[0])
     if(sum(restEnergy[1]) == 0):  # This means that supply and demand cancel each other, and no more trading is necessary
         flexFlag = 2
         marketPrice = wholesalePrice
@@ -130,9 +126,7 @@ def trade(numTxCentral, numTxNodes, numTxInitiate, price, battery, availableFlex
     sortedPrice = [[0 for x in range(numHouses)] for y in range(2)]
     copySortedPrice = [[0 for x in range(numHouses)] for y in range(2)]
 
-    # Sort los listas de precio
-    # Mark that all prices only must consist of the nodes that is included in the trading
-
+    # If supply and demand do not cancel each other, we must utilise the batteries to cancel the deviations
     i = 0
     if (flexFlag == 0):
         demandFlex = copy.deepcopy(upAvailableFlex)
@@ -158,8 +152,11 @@ def trade(numTxCentral, numTxNodes, numTxInitiate, price, battery, availableFlex
             copySortedPrice[1][copySortedPrice[1].index(sortedPrice[1][i])] = -1
 
     firstFlexFlag = copy.deepcopy(flexFlag)
+
+    # The line below matches the batteries with the rest energy
     flexFlag, transactions, restEnergy = match.matching(flexFlag, transactions, demandFlex, supplyFlex)
 
+    # The part below finds the market price
     if (firstFlexFlag == 0):
         if(flexFlag == 0):
             wholesale = sum(restEnergy[1])
@@ -180,6 +177,7 @@ def trade(numTxCentral, numTxNodes, numTxInitiate, price, battery, availableFlex
             marketPrice = wholesalePrice
             lastBattery = -1
             print("The system are still ",wholesale," kWh under the bid amount")
+
 
     ################################################################################
     ### The calculation is done, and the transactions are performed in blockchain ##

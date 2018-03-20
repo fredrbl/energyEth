@@ -5,22 +5,21 @@ contract FutureBlock{
 
     // Description:
     // The product of this trading is a spesific energy amount at a spesified time interval
-    // An aspect with this trading is that a lot of responsibility rests on the battery owners.
-    // They must have a intelligent controller that can handle several tradings.
 
-    ///// Set up a struct for the offer. The offer is from a node who needs flexibility
+    ///// Set up a struct for the offer. The offer is from a node who needs flexibility, which most likely is the grid operator
     struct Offer {
         address owner;   // Who needs the flexibility?
         int offerAmount;   // This amount could be negative and positive. Negative implies that the oferter is using too much, and must remove his consumption
         uint[2] interval;   // Over how long time is the energy needed?
         uint offerNr;
 
-        mapping(uint => Bid) acceptedBids;
+        mapping(uint => Bid) acceptedBids; // This is a vector over the accepted bids
         uint numAcceptedBids;
-        uint acceptedPrice;
-        bool fulfilled;
+        uint acceptedPrice; // This is the final market price
+        bool fulfilled; // If the offer is fulfilled, it is not possible to deliver more bids to the offer
     }
 
+    // A bid struct is made, which describes all bids
     struct Bid {
         address bidder;
         uint offerNr;  // What offer the struct is pointing at
@@ -35,7 +34,7 @@ contract FutureBlock{
     uint public numBids;
 
 
-    // Have not written the events yet, then it is not yet needed
+    // Events are needed to alert the nodes in the system when the things below happen. This is useful when the grid operator needs flexibility automatically and fast.
     event NewOffer();
     event UpdateBid();
     event CorrectionOffer();
@@ -43,7 +42,7 @@ contract FutureBlock{
     /////// FUNCTIONS ////////
 
     function newOffer(int _amount, uint _startInterval, uint _endInterval) public {
-        // This should trigger an event to warn the batteries
+        NewOffer;
         numOffers = numOffers + 1;
         Offer o = offers[numOffers];
         o.offerNr = numOffers;
@@ -73,7 +72,7 @@ contract FutureBlock{
 
     function updateBid(uint _offerNr, uint _bidNr, int _bidAmount, uint _bidPrice) public returns(bool success)  {
         // as the realizing time approaches, the batteries can update their price to more expensive prices.
-        // This should trigger an event to warn the oferter
+        UpdateBid;
         if (offers[_offerNr].fulfilled == true) {  return false;  }
         if(bids[_bidNr].bidder == msg.sender && bids[_bidNr].offerNr == _offerNr){
             // This applies when the sender already have a bid on the applied offer
@@ -91,21 +90,21 @@ contract FutureBlock{
         return(bids[_bidNr].bidder, bids[_bidNr].bidAmount, bids[_bidNr].bidPrice);
     }
 
+
+    // The two functions below is used by the grip operator, when deciding what bids should be accepted, and to what price
     function setAcceptedBids(uint _offerNr, uint _bidNr) public {
         require(offers[_offerNr].owner == msg.sender);
         offers[_offerNr].acceptedBids[offers[_offerNr].numAcceptedBids] = bids[_bidNr];
         offers[_offerNr].numAcceptedBids = offers[_offerNr].numAcceptedBids + 1;
     }
-    // Do not need this, remove at a later stage
 
     function setAcceptedPrice(uint _offerNr, uint _acceptedPrice) {
         require(offers[_offerNr].owner == msg.sender);
         offers[_offerNr].acceptedPrice = _acceptedPrice;
     }
-    // Do not need this, remove at a later stage
 
-    function transferAndClose(uint _offerNr, address contractAddress) public returns (bool success){ // This can only be called by the
-        // first, we must require that msg.sender is the owner of the offer!
+    function transferAndClose(uint _offerNr, address contractAddress) public returns (bool success){
+        // This can only be called by the owner of the offer.
         require(offers[_offerNr].owner == msg.sender);
         uint i = 0;
         FlexCoin f = FlexCoin(contractAddress);

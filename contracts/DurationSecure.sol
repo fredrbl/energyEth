@@ -23,13 +23,8 @@ contract DurationSecure {
         n.demandPrices = _demandPrices;
         n.supplyHours = _supplyHours;
         numNodes = numNodes + 1;
-        // si no functiona con array como ingreso, pone un uint 01010111000.
     }
     // 206 205 gas
-
-    // Quiza la supply puede involver una variable que dice algo sobre la probilidad.
-    // Por ejemplo; Un supply mas pronto deberia tiene un probilidad mas alto.
-    // Que vas a hacer con lo? Combina alto prob aqui con alto prob abajo? hmm.
 
     function getNode(uint _nodeID, uint timeStep, uint nodeFlag) constant public returns(address, uint, uint, uint){
         if (nodeFlag == 0){ // Here, the node is a supply node

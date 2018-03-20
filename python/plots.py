@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 
+# This script is used to plot interesting results of the real time trading
 def realTimePlot(flexCoinBalance, battery, price, deviation, marketPrice):
     # Show development of costs, deviations, battery and marketprice. Use 4 random nodes -> First one graph with two non battery, and then two with
 
@@ -76,15 +77,3 @@ def realTimePlot(flexCoinBalance, battery, price, deviation, marketPrice):
     plt.ylabel("Accumulated Profit")
     plt.plot(x, y1, x, y2, 'o-')
     accProfitFig.show()
-
-
-def futureBlockPlot():
-    # How to plot it?
-    # A user must order energy, and the battery must provide it
-    # Set a random order at times. could do that. If a random bid comes in, there must exist several bidders.
-    #
-
-    # How to simulate in general?
-        ## In any case, I must create a behavior pattern in each node that sets their own batteryPlan.
-        # Then, if a battery sells flex, I must change the battery plan accordingly...
-        # Is this within my scope?

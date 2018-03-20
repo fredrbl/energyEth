@@ -39,7 +39,7 @@ contract RealTime {
 
   function setRealTimeNodePrice(uint _houseID, uint _upPrice, uint _downPrice) public {
 
-    //Could be activated if we only want to update your own house
+    // The if sentence below could be activated if we only want to update your own house
     // if (houses[_houseID].owner == msg.sender){
           RealTimeNode h = houses[_houseID];
           h.upPrice = _upPrice;
@@ -108,6 +108,7 @@ contract RealTime {
 
       if(demand < supply && (flexFlag != 0 || transactedAmount != supply)) { return 0; }
       if(demand > supply && (flexFlag != 1 || transactedAmount != demand)) { return 0; }
+
     //////////////////////////////////////////////////////////////////////////
     //////// 3. At last, we must check if the marketPrice is correct /////////
     //////////////////////////////////////////////////////////////////////////

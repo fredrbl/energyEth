@@ -17,8 +17,8 @@ This repository exists of several folders. Below is a explanation of each folder
 - **populus.json**: This is the file where all the blockchain network properties are stored. Examples is the mainnet for ethereum or a testRPC
 
 ## The contracts:
-- **Duration:** This is a duration differentiated method. In the thesis, this is called the _day ahead_ trading
-- **DurationSecure:** This is the _day ahead_ trading without a security check in the smart contract
+- **Duration:** This is a duration differentiated method without. In the thesis, this is called the _day ahead_ trading without security check
+- **DurationSecure:** This is the _day ahead_ trading with a security check in the smart contract. This is therefore the main day ahead contract.
 - **FlexCoin:** This is the payment contract. This creates houses and performs payments between the houses, independent on the trading mechanism
 - **FutureBlock:** This is when the grid operator sells a future block of energy. It is called _load curtailment_ trading in the master thesis
 - **RealTime:** This is the _real time_ trading in the master thesis

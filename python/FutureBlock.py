@@ -16,6 +16,7 @@ FutureBlock = web3.eth.contract(address, abi = abi)
 cost = 0
 
 ####### Isolate and test the mechanism ###########
+# This is creating 25 bids, accetps three, and closes
 def testFutureBlock():
     tempCost = []
     tempCost.append(FutureBlock.transact({'from': web3.eth.accounts[0]}).newOffer(15, 150, 180))
