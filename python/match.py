@@ -1,4 +1,6 @@
 
+##### This script is used to match supply and demand, and fill the results into a transactions vector
+### Flexflag is checked to be 
 
 def matching(flexFlag, transactions, demand, supply):
     i = 0

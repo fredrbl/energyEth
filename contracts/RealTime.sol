@@ -37,8 +37,6 @@ contract RealTime {
   }
   // costs 132 707 gas
 
-// que hace? teien q hacer algo diferente
-
   function setRealTimeNodePrice(uint _houseID, uint _upPrice, uint _downPrice) public {
 
     //Could be activated if we only want to update your own house

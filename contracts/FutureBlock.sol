@@ -60,7 +60,7 @@ contract FutureBlock{
 
     function setBid(uint _offerNr, int _bidAmount, uint _bidPrice) public returns(bool success)  {
         if (offers[_offerNr].fulfilled == true) {  return false;  }
-        // Could have a for-loop here to ensure that the msg.sender dont have a bid in the offer
+        // Could have a for-loop here to ensure that the msg.sender dont have a bid in the offer. This is however not necessary, and up to market designer.
         numBids = numBids + 1;
         Bid b = bids[numBids];
         b.bidder = msg.sender;

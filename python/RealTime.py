@@ -205,12 +205,21 @@ def trade(numTxCentral, numTxNodes, numTxInitiate, price, battery, availableFlex
 ######## Now, we could test the system over a certain set of time steps
 def testRealTime(numHouses, numPeriods):
     i = 0
+
+    #####################################################################################
+    ####### The loop below is called if there not are premade sufficient houses in FlexCoin
+    ####### If creates new nodes in the blockchain network, and giving them ether, which is necessary in order to trade
+    ####### Thereafter, it is created a new house from its address
+    #####################################################################################
     while (FlexCoin.FlexCoin.call().numHouses() < numHouses):
-        web3.personal.newAccount('pass')
+        web3.personal.newAccount('pass') # Pass is the password necessary to unlock the account.
         web3.personal.unlockAccount(web3.eth.accounts[FlexCoin.FlexCoin.call().numHouses()], 'pass')
         web3.eth.sendTransaction({'to': web3.eth.accounts[FlexCoin.FlexCoin.call().numHouses()], 'from': web3.eth.coinbase, 'value': 123456789})
-        FlexCoin.FlexCoin.transact().newHouse() # {'from': web3.eth.accounts[FlexCoin.FlexCoin.call().numHouses()]}
+        ################# Now, the new node is created, and have an amount of ether. We must now create a house in his address
+        FlexCoin.FlexCoin.transact().newHouse({'from': web3.eth.accounts[FlexCoin.FlexCoin.call().numHouses()]})
 
+    ### The variables below is used to measure the amount of transactions which is done in the system
+    ## Central is the central node, node is how many each node sends in, and initiate is when a new account is initiated.
     numTxCentral = 0
     numTxNodes = 0
     numTxInitiate = 0
@@ -225,16 +234,6 @@ def testRealTime(numHouses, numPeriods):
     price = [[[0 for z in range(numHouses)] for x in range(0, 2)] for y in range(numPeriods)]
     nodeCost = [0 for i in range(numPeriods)]
     centralCost = [0 for i in range(numPeriods)]
-
-
-    oldBattery = [6700, 0, 6700, 0, 6700, 0, 6700, 0, 6700, 0] #starting at 50 SOC.s given we have 6 batteries
-    oldBatteryFlag = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0] # this batteryFlag tells what kind of battery that are used
-    BattEff = 0.9 # Taken from Tesla Powerwall 2.0
-
-    oldPrice = [[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], [[492, 0, 509, 0, 541, 0, 577, 0, 537, 0], [441, 0, 386, 0, 419, 0, 444, 0, 378, 0]], [[558, 0, 520, 0, 588, 0, 504, 0, 518, 0], [456, 0, 395, 0, 388, 0, 436, 0, 350, 0]], [[491, 0, 499, 0, 570, 0, 503, 0, 568, 0], [440, 0, 405, 0, 370, 0, 383, 0, 407, 0]], [[537, 0, 589, 0, 584, 0, 551, 0, 536, 0], [388, 0, 423, 0, 356, 0, 358, 0, 430, 0]], [[483, 0, 540, 0, 564, 0, 560, 0, 518, 0], [394, 0, 396, 0, 373, 0, 363, 0, 385, 0]], [[497, 0, 531, 0, 536, 0, 588, 0, 529, 0], [407, 0, 452, 0, 381, 0, 444, 0, 422, 0]], [[566, 0, 499, 0, 512, 0, 501, 0, 551, 0], [380, 0, 367, 0, 393, 0, 424, 0, 398, 0]], [[556, 0, 538, 0, 543, 0, 483, 0, 524, 0], [381, 0, 370, 0, 398, 0, 460, 0, 419, 0]], [[581, 0, 484, 0, 559, 0, 481, 0, 516, 0], [427, 0, 381, 0, 436, 0, 455, 0, 389, 0]], [[584, 0, 503, 0, 504, 0, 530, 0, 583, 0], [382, 0, 377, 0, 409, 0, 415, 0, 408, 0]], [[484, 0, 583, 0, 534, 0, 513, 0, 557, 0], [418, 0, 393, 0, 416, 0, 389, 0, 356, 0]], [[590, 0, 538, 0, 536, 0, 568, 0, 540, 0], [402, 0, 428, 0, 379, 0, 459, 0, 385, 0]], [[483, 0, 489, 0, 532, 0, 482, 0, 575, 0], [447, 0, 407, 0, 455, 0, 380, 0, 427, 0]], [[511, 0, 567, 0, 537, 0, 564, 0, 561, 0], [379, 0, 358, 0, 375, 0, 419, 0, 422, 0]], [[500, 0, 516, 0, 521, 0, 499, 0, 517, 0], [352, 0, 426, 0, 414, 0, 420, 0, 430, 0]], [[528, 0, 500, 0, 516, 0, 544, 0, 489, 0], [356, 0, 362, 0, 460, 0, 441, 0, 400, 0]], [[485, 0, 561, 0, 532, 0, 511, 0, 552, 0], [450, 0, 450, 0, 435, 0, 395, 0, 381, 0]], [[481, 0, 543, 0, 547, 0, 500, 0, 545, 0], [403, 0, 399, 0, 427, 0, 352, 0, 388, 0]], [[518, 0, 588, 0, 588, 0, 480, 0, 563, 0], [380, 0, 354, 0, 428, 0, 372, 0, 434, 0]]]
-
-    oldDeviation = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [475, -294, -217, -294, -408, -450, -5, -499, -375, 429], [-431, 287, 35, -287, -229, -338, 197, -129, -435, -18], [41, 92, 129, -379, -81, 453, 54, 7, 299, 272], [-462, -56, -474, 118, -315, -360, 201, -443, 269, -41], [-292, -269, 437, -320, 318, -121, 101, 11, -413, -265], [164, -229, 144, -430, 455, -7, 357, -160, -232, 355], [-145, 94, 387, 13, -78, 0, 138, 243, -197, -25], [237, -368, 124, -497, -202, -5, -251, -27, -490, -417], [114, -149, 202, -76, 495, -265, 437, 356, 104, 79], [490, 450, -317, -393, -197, 95, -341, -43, -215, 118], [-412, 89, -226, 235, -330, -192, -466, -497, -21, -214], [-220, -214, -293, 298, -424, 47, 110, 354, 88, 287], [140, -448, 384, -164, 421, 180, 445, 266, 290, -122], [-52, 467, -75, 228, 362, 276, -354, 326, -58, 415], [-199, 234, 459, -368, -424, 217, -99, -253, 148, -66], [152, 319, -160, -207, -400, 356, 300, -336, -135, 117], [-369, -271, 18, -229, -361, 218, -493, -409, 301, -326], [-126, -469, 60, 2, 1, 36, 12, -204, -277, 298], [-324, 381, 4, 152, 478, 41, 49, -46, -231, -408]]
-
     flexCoinBalance = [[0 for x in range(numHouses)] for y in range(numPeriods)]
 
     for i in range(0, numHouses):
@@ -242,6 +241,7 @@ def testRealTime(numHouses, numPeriods):
             battery[0][i] = 6700
             batteryFlag[i] = 1
 
+    ## Randomising deviations and price
     for i in range(0, numPeriods):
         for j in range(0, numHouses):
             deviation[i][j] = random.randint(-500, 500)
@@ -254,9 +254,8 @@ def testRealTime(numHouses, numPeriods):
 
     for i in range(0, numPeriods): #144 for a whole day
 
-        ### Setting the deviations
+        ### Setting the deviations.
         for j in range(0,numHouses):
-            #deviation[i][j] = random.randint(-500, 500)
             if ((battery[i - 1][j] > deviation[i][j]) and (battery[i - 1][j] < deviation[i][j] + 13500) and (batteryFlag[j] == 1)):
                 battery[i][j] = battery[i - 1][j] + deviation[i][j]  # If deviation not is included, the batteries work without
                 # deviation[i][j] = 0 # It is being set to zero later anyway
@@ -268,7 +267,8 @@ def testRealTime(numHouses, numPeriods):
                     deviation[i][j] = deviation[i][j] - battery[i][j]
                     battery[i][j] = 0
 
-        ### Now, we must set the price based on the battery status
+        ### Now, we must set the price based on the battery status. This thesis have chosen not to use this function, and rather use a randomised price for each time.
+        ## If a user wants to set a different price (which should be done), it is recommended to use setPrice function.
         # price[i] = setPrice(battery[i])
 
         ### Set the available flexibility in each battery
@@ -281,30 +281,16 @@ def testRealTime(numHouses, numPeriods):
                 battery[i][j] = round(int(0.9 * battery[i][j]))
             _, flexCoinBalance[i][j] = FlexCoin.FlexCoin.call().getHouse(web3.eth.accounts[j])
 
-    #We must print the results!
-    # The payment is amount of bid +/- transacted. What about the batteries and their deviation?
-
     averageNode = (sum(nodeCost)/numPeriods)
     averageCentral = sum(centralCost)/numPeriods
     return numTxCentral, numTxNodes, numTxInitiate, flexCoinBalance, battery, price, deviation, marketPrice, averageNode, averageCentral
 
+
+#### The simulation is now performed. The main results is averageCentral and averageNode, where these provides with the gas results from the central calculation and the nodes
 counter = 0
 node = [0 for i in testRange]
 total = [0 for i in testRange]
 for i in testRange:
     numTxCentral[counter], numTxNodes[counter], numTxInitiate[counter], flexCoinBalance, battery, price, deviation, marketPrice, averageNode[counter], averageCentral[counter] = testRealTime(i, 1)
-    averageCentral[counter] = averageCentral[counter] - counter*8770*0
-    node[counter] = averageNode[counter] - 78000
     total[counter] = node[counter] + averageCentral[counter]
     counter = counter + 1
-
-#
-#centralPlot = plt.figure(1)
-#central = np.asarray(central)
-#x = np.arange(98, 101, 1)
-#y = central[x]
-#plt.xticks(np.arange(x.min(), x.max(), 1))
-#plt.xlabel("Time step")
-#plt.ylabel("Central Cost")
-#plt.plot(x, y, 'o-')
-#centralPlot.show()
